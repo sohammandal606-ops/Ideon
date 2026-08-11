@@ -1,10 +1,10 @@
 # IDEON — AI Startup Builder
 
-## 1. Project Overview
+## 1. Overview
 
-**IDEON** is an Agentic AI platform that helps users transform a startup idea into a structured, research-backed, and continuously improvable startup plan.
+**IDEON** is an Agentic AI platform that transforms a startup idea into a structured, research-backed, and continuously improvable startup strategy.
 
-Instead of producing one large chatbot response, IDEON uses multiple specialized AI agents orchestrated through **LangGraph**. Each agent handles a specific startup-building task, while a shared startup state connects their outputs.
+Instead of producing a single chatbot response, IDEON maintains a structured **Startup State** and uses specialized AI agents orchestrated with **LangGraph** to analyze the startup from multiple perspectives.
 
 The system combines:
 
@@ -14,15 +14,58 @@ The system combines:
 - RAG
 - Live web research
 - Structured LLM outputs
-- PostgreSQL + pgvector
+- Evidence-backed analysis
+- Assumption tracking
+- Contradiction detection
+- Validation experiments
+- Selective re-execution
 - Automated artifact generation
-- Dependency-aware selective re-execution
 
-IDEON is implemented as a **Python modular monolith** with a FastAPI backend and a Next.js frontend.
+IDEON is designed as a **Python modular monolith** with a FastAPI backend and a Next.js frontend.
 
 ---
 
-# 2. User Perspective
+# 2. Core Concept
+
+The central idea behind IDEON is a **living, evidence-backed model of a startup**.
+
+A startup is not treated as a static prompt. It is represented by structured information such as:
+
+- Startup idea
+- Problem
+- Solution
+- Target customers
+- Market
+- Pricing
+- Business model
+- Financial assumptions
+- MVP
+- GTM strategy
+- Founder profile
+- Evidence
+- Risks
+- Assumptions
+
+Agents continuously analyze this state and update relevant outputs.
+
+```text
+                 STARTUP STATE
+                      │
+          ┌───────────┼───────────┐
+          ↓           ↓           ↓
+       Market      Product     Business
+     Assumptions  Assumptions  Assumptions
+          │           │           │
+          └───────────┼───────────┘
+                      ↓
+               Agent Analysis
+                      ↓
+                Updated State
+```
+
+---
+
+# 3. User Perspective
 
 ## User Workflow
 
@@ -41,15 +84,19 @@ Enter Founder Profile
     ↓
 Configure Analysis
     ↓
-Start AI Analysis
+Run AI Analysis
     ↓
 View Analysis Progress
     ↓
 View Startup Results
     ↓
+Review Risks & Assumptions
+    ↓
 Generate Artifacts
     ↓
 Chat with AI Consultant
+    ↓
+Run Validation Experiments
     ↓
 Modify Startup
     ↓
@@ -58,7 +105,7 @@ Re-run Affected Analysis
 
 ## Startup Information
 
-Users provide information such as:
+Users can provide:
 
 - Startup name
 - Startup idea
@@ -67,7 +114,8 @@ Users provide information such as:
 - Industry
 - Target market
 - Country/region
-- Initial assumptions
+- Pricing assumptions
+- Initial business assumptions
 
 ## Founder Profile
 
@@ -82,9 +130,9 @@ Users can provide:
 
 ---
 
-# 3. AI Analysis
+# 4. AI Analysis
 
-IDEON uses specialized agents for different startup-building tasks.
+IDEON uses specialized components for different startup-building tasks.
 
 ### Idea Validator
 
@@ -96,9 +144,9 @@ Evaluates:
 - Technical feasibility
 - Differentiation
 - Monetization potential
-- Risks
+- Key risks
 
-Produces a validation score, strengths, weaknesses, risks, recommendations, and confidence.
+Produces structured validation results, recommendations, and confidence.
 
 ### Market Research
 
@@ -111,7 +159,7 @@ Analyzes:
 - Industry trends
 - Growth opportunities
 
-Uses **live web research and RAG**.
+Uses live web research and RAG.
 
 ### Competitor Analysis
 
@@ -121,7 +169,8 @@ Analyzes:
 - Indirect competitors
 - Pricing
 - Features
-- Strengths and weaknesses
+- Strengths
+- Weaknesses
 - Competitive gaps
 - Differentiation opportunities
 
@@ -139,9 +188,8 @@ Generates:
 
 ### Financial Analysis
 
-Generates estimated:
+Generates assumption-based:
 
-- Pricing assumptions
 - Customer projections
 - Revenue projections
 - Cost projections
@@ -149,9 +197,9 @@ Generates estimated:
 - Profit estimates
 - Financial scenarios
 
-Financial values are **AI-generated estimates based on explicit assumptions**, not guaranteed forecasts.
+Where possible, the LLM proposes assumptions and deterministic Python code performs calculations.
 
-Where possible, the LLM provides assumptions while deterministic Python code performs calculations.
+Financial outputs are explicitly treated as **estimates, not guaranteed forecasts**.
 
 ### MVP Planner
 
@@ -177,104 +225,166 @@ Generates:
 - Customer acquisition plan
 - Growth strategy
 
-### Landing Page
-
-Generates:
-
-- Hero section
-- Problem
-- Solution
-- Features
-- Pricing
-- CTA
-- FAQ
-
-### Pitch Deck
-
-Generates:
-
-1. Cover
-2. Problem
-3. Solution
-4. Product
-5. Market
-6. Competition
-7. Business Model
-8. Go-To-Market
-9. Financial Projection
-10. Roadmap
-11. Funding Ask
-
-### Final Report
-
-Combines the analysis into:
-
-- Executive summary
-- Idea validation
-- Market research
-- Competitor analysis
-- Business model
-- Financial analysis
-- MVP
-- GTM
-- Risks
-- Recommendations
-- Final verdict
-
 ### Verdict
 
-Produces:
+Synthesizes the complete startup analysis and produces:
 
 - Overall score
 - Recommendation
 - Strengths
 - Risks
 - Opportunities
-- Next steps
-- Confidence score
+- Confidence
+- Recommended next steps
+- Key assumptions to validate
 
 The verdict is decision support, not a guarantee of startup success.
 
 ---
 
-# 4. Startup AI Consultant
+# 5. Evidence and Assumptions
 
-After the main analysis, users can continue discussing their startup with a persistent AI consultant.
+A key feature of IDEON is distinguishing between different types of information.
 
-Example questions:
+Important claims can be classified as:
 
 ```text
-Should I reduce my pricing?
-
-Which competitor is my biggest threat?
-
-Should I target students or working professionals?
-
-What feature should I remove from my MVP?
+FACT
+ASSUMPTION
+ESTIMATE
+INFERENCE
+RECOMMENDATION
 ```
 
-The consultant uses:
+An assumption can contain:
 
-- Startup information
-- Founder profile
-- Previous agent outputs
-- Market research
-- Competitor analysis
-- Business model
-- Financial assumptions
-- MVP
-- GTM
-- RAG knowledge
+```text
+Assumption
+    ↓
+Confidence
+    ↓
+Supporting Evidence
+    ↓
+Impact
+    ↓
+Validation Status
+```
 
-The consultant is **startup-specific**, rather than a generic chatbot.
+Example:
+
+```text
+Target Market:
+College Students
+
+Confidence:
+Medium
+
+Impact:
+High
+
+Evidence:
+Market research + competitor data
+
+Status:
+Needs validation
+```
+
+This allows IDEON to identify which assumptions are weak, important, or unsupported.
 
 ---
 
-# 5. Selective Re-Execution
+# 6. Evidence Layer
 
-A major feature of IDEON is **dependency-aware selective re-execution**.
+Important analysis claims should be connected to evidence where possible.
 
-When a user changes an assumption, IDEON determines which analysis outputs are affected instead of restarting everything.
+Example:
+
+```text
+Claim:
+Competitors charge approximately ₹499/month.
+
+Evidence:
+Competitor pricing pages
+
+Source:
+Web research
+
+Confidence:
+High
+```
+
+This allows IDEON to distinguish evidence-backed findings from assumptions and AI-generated estimates.
+
+RAG provides relatively stable knowledge, while live web research provides current external evidence.
+
+---
+
+# 7. Contradiction Detection
+
+IDEON can detect inconsistencies between different parts of the startup state.
+
+Example:
+
+```text
+Founder Budget:
+₹50,000
+
+Financial Plan:
+Marketing Budget = ₹2,00,000
+```
+
+IDEON can flag:
+
+> Proposed marketing expenditure exceeds the stated available budget.
+
+Another example:
+
+```text
+Target Customer:
+Price-sensitive students
+
+Pricing:
+₹4,999/month
+```
+
+IDEON can flag this as a potential pricing-segment mismatch.
+
+Contradiction detection helps prevent the system from generating internally inconsistent startup plans.
+
+---
+
+# 8. Validation Experiments
+
+IDEON can convert uncertain assumptions into practical validation experiments.
+
+Example:
+
+```text
+Hypothesis:
+Students will pay ₹299/month.
+
+Experiment:
+Create a landing page and test demand.
+
+Success Criteria:
+Defined signup or payment-intent threshold.
+
+Time:
+7 days
+
+Decision:
+Continue / Modify / Reject
+```
+
+This moves IDEON beyond generating recommendations toward helping founders **test the assumptions behind those recommendations**.
+
+---
+
+# 9. Selective Re-execution
+
+A core Agentic AI feature is **dependency-aware selective re-execution**.
+
+When a user changes an assumption, IDEON identifies affected outputs instead of restarting the entire workflow.
 
 Example:
 
@@ -299,7 +409,7 @@ Affected Components
 Selective Re-execution
 ```
 
-For example:
+Potentially affected components:
 
 ```text
 Market Research       → RE-RUN
@@ -319,139 +429,137 @@ This makes IDEON a **stateful, dependency-aware multi-agent system** rather than
 
 ---
 
-# 6. Developer Perspective
+# 10. Startup AI Consultant
 
-## Architecture
+After analysis, users can continuously discuss their startup with a persistent AI consultant.
+
+Example questions:
+
+```text
+Should I reduce my pricing?
+
+Which competitor is my biggest threat?
+
+Should I target students or working professionals?
+
+What feature should I remove from my MVP?
+
+Which assumption should I validate first?
+```
+
+The consultant uses:
+
+- Startup State
+- Founder Profile
+- Agent Outputs
+- Market Research
+- Competitor Analysis
+- Business Model
+- Financial assumptions
+- MVP
+- GTM
+- Evidence
+- RAG knowledge
+
+The consultant is startup-specific rather than a generic chatbot.
+
+---
+
+# 11. Developer Architecture
 
 IDEON is a **Python modular monolith**.
 
 ```text
-Next.js Frontend
-       ↓
-     FastAPI
-       ↓
-    Services
-       ↓
-   Workflows
-       ↓
-   LangGraph
-       ↓
- Startup State
-       ↓
- Specialized Agents
-       ↓
- ┌─────┴─────────┐
- ↓               ↓
-Gemini       RAG / Research
- ↓               ↓
- └───────┬───────┘
-         ↓
- Supabase PostgreSQL
+Next.js
+   ↓
+FastAPI
+   ↓
+Services
+   ↓
+Workflows
+   ↓
+LangGraph
+   ↓
+Specialized Agents
+   ↓
+Gemini
+   ├── RAG
+   └── Web Research
+   ↓
+Repositories
+   ↓
+SQLModel / SQLAlchemy
+   ↓
+asyncpg
+   ↓
+Supabase PostgreSQL
 ```
 
-The frontend communicates only with the FastAPI backend.
+The frontend communicates only with FastAPI.
 
 ---
 
-# 7. Backend Architecture
+# 12. Layer Responsibilities
 
-### API Layer
+| Layer | Responsibility |
+|---|---|
+| `api/` | HTTP endpoints and request/response handling |
+| `services/` | Application and business logic |
+| `workflows/` | LangGraph workflow orchestration |
+| `agents/` | Specialized AI reasoning |
+| `schemas/` | Pydantic data contracts |
+| `db/models/` | Database/ORM models |
+| `db/repositories/` | ORM queries and persistence |
+| `core/` | Configuration and shared backend infrastructure |
+| `tests/` | Backend unit and integration tests |
 
-Responsible for:
+Artifact generation is treated as application/service functionality rather than requiring every artifact generator to be an autonomous agent.
 
-- HTTP endpoints
-- Request validation
-- Authentication
-- API responses
-- API versioning
+---
 
-API prefix:
-
-```text
-/api/v1/
-```
-
-### Service Layer
-
-Coordinates application operations such as:
-
-- Startup management
-- Analysis execution
-- Chat
-- Artifact generation
-- Re-execution
-
-### Workflow Layer
-
-Handles high-level workflows:
-
-- Initial analysis
-- Selective re-execution
-- Chat
-- Impact analysis
-
-### Agent Layer
-
-Contains specialized AI agents:
+# 13. Main LangGraph Workflow
 
 ```text
+START
+  ↓
 Idea Validator
-Market Research
-Competitor Analysis
-Business Model
-Financial
-MVP Planner
-GTM
-Landing Page
-Pitch Deck
-Verdict
-Startup Chat
+  ↓
+Market Research ─────┐
+                     ├──→ Business Model
+Competitor Analysis ─┘
+                         ↓
+                     Financial
+                         ↓
+                        MVP
+                         ↓
+                        GTM
+                         ↓
+                ┌────────┴────────┐
+                ↓                 ↓
+          Landing Page       Pitch Deck
+                └────────┬────────┘
+                         ↓
+                    Final Report
+                         ↓
+                      Verdict
+                         ↓
+                        END
 ```
-
-### Graph Layer
 
 LangGraph manages:
 
-- Shared state
-- Agent nodes
+- Shared startup state
+- Nodes
 - Edges
 - Routing
 - Execution order
 - State updates
+- Conditional execution
+- Selective re-execution
 
 ---
 
-# 8. Agent and Graph Separation
-
-Agents handle AI reasoning.
-
-```text
-Context
- ↓
-Prompt
- ↓
-Gemini
- ↓
-Structured Output
-```
-
-Graph nodes connect agents to the workflow.
-
-```text
-Startup State
- ↓
-Graph Node
- ↓
-Agent
- ↓
-State Update
-```
-
-This keeps AI logic separate from workflow orchestration.
-
----
-
-# 9. RAG System
+# 14. RAG System
 
 IDEON uses **Supabase PostgreSQL with pgvector** for semantic retrieval.
 
@@ -467,13 +575,13 @@ Potential knowledge sources:
 
 ```text
 Documents
- ↓
+    ↓
 Extraction
- ↓
+    ↓
 Chunking
- ↓
+    ↓
 Embeddings
- ↓
+    ↓
 pgvector
 ```
 
@@ -481,43 +589,41 @@ pgvector
 
 ```text
 Agent
- ↓
+  ↓
 RAG Service
- ↓
+  ↓
 Retriever
- ↓
+  ↓
 pgvector
- ↓
+  ↓
 Relevant Context
 ```
 
-RAG provides relatively stable knowledge, while live web research provides current information.
-
 ---
 
-# 10. Web Research
+# 15. Web Research
 
-Tavily provides live research.
+Tavily provides live external research.
 
 ```text
 Agent
- ↓
+  ↓
 Research Service
- ↓
+  ↓
 Tavily
- ↓
+  ↓
 Search Results
- ↓
+  ↓
 Content Extraction
- ↓
+  ↓
 Research Context
 ```
 
-Market Research and Competitor Analysis are the primary research-heavy agents.
+Market Research and Competitor Analysis are the primary research-heavy components.
 
 ---
 
-# 11. Database and Authentication
+# 16. Database and Authentication
 
 Supabase provides:
 
@@ -530,16 +636,18 @@ Supabase provides:
 Database access:
 
 ```text
+FastAPI
+   ↓
 SQLModel
- ↓
-SQLAlchemy
- ↓
-Psycopg 3 Async
- ↓
+   ↓
+SQLAlchemy Async
+   ↓
+asyncpg
+   ↓
 Supabase PostgreSQL
 ```
 
-Main entities include:
+Core entities include:
 
 ```text
 User
@@ -553,166 +661,96 @@ ChatSession
 ChatMessage
 ```
 
-Authentication:
+The system can later extend the data model with:
 
 ```text
-User
- ↓
-Supabase Auth
- ↓
-JWT / Session
- ↓
-FastAPI
- ↓
-Authentication Dependency
+StartupAssumption
+Evidence
+ValidationExperiment
+Contradiction
 ```
 
-The backend enforces ownership of startup data and artifacts.
+Authentication uses Supabase Auth with backend-side authorization and startup ownership checks.
 
 ---
 
-# 12. Realtime Progress
+# 17. Realtime Progress
 
-Supabase Realtime is used instead of maintaining a custom FastAPI WebSocket layer.
+IDEON uses **Supabase Realtime** instead of maintaining a custom FastAPI WebSocket layer.
 
 ```text
 LangGraph
     ↓
-Analysis Progress
+Progress Update
     ↓
 Supabase PostgreSQL
     ↓
 Supabase Realtime
     ↓
-Next.js Frontend
+Next.js
 ```
-
-This keeps realtime infrastructure simpler and avoids maintaining a custom WebSocket manager.
 
 ---
 
-# 13. Artifact Generation
+# 18. Artifact Generation
 
-IDEON generates:
+IDEON can generate:
 
 - PDF startup reports
 - PowerPoint pitch decks
-- Landing page output
+- Landing-page output
 
 ```text
 Structured Analysis
- ↓
-Artifact Generator
- ↓
-Generated File
- ↓
+       ↓
+Artifact Service
+       ↓
 Supabase Storage
- ↓
+       ↓
 Artifact Metadata
 ```
 
----
-
-# 14. Persistence
-
-LangGraph state is used during workflow execution, while important results are persisted in PostgreSQL.
-
-This supports:
-
-- Analysis history
-- Persistent startup context
-- Chat
-- Artifact references
-- Failure recovery
-- Selective re-execution
-- Versioning
+Artifacts are outputs of the intelligence system, not the core intelligence itself.
 
 ---
 
-# 15. Testing
+# 19. Technology Stack
 
-Testing is kept inside the backend:
-
-```text
-backend/
-└── tests/
-    ├── unit/
-    └── integration/
-```
-
-Tests will cover:
-
-- Agents
-- Graph nodes
-- Workflows
-- Services
-- Financial calculations
-- Dependency analysis
-- API
-- Database
-- Authentication
-- Workflow execution
-
-LLM tests should validate **structured outputs and behavior**, not exact generated prose.
-
----
-
-# 16. Architecture Rules
-
-1. The frontend communicates only with FastAPI.
-2. LangGraph controls workflow orchestration.
-3. Agents perform specialized AI reasoning.
-4. Graph nodes connect agents to shared state.
-5. Services coordinate application operations.
-6. Repositories handle database access.
-7. Pydantic schemas define structured contracts.
-8. RAG handles stable knowledge retrieval.
-9. Tavily handles live research.
-10. Python handles deterministic calculations.
-11. Supabase provides PostgreSQL, Auth, Storage, and Realtime.
-12. Important intermediate results are persisted.
-13. Secrets remain server-side.
-14. Selective re-execution recomputes only affected outputs.
-15. The project remains a modular monolith.
-
----
-
-# 17. Technology Stack
-
-## Backend
+### Backend
 
 - Python
 - FastAPI
 - Pydantic
+- Pydantic Settings
 - SQLModel
 - SQLAlchemy
-- Psycopg 3 Async
+- asyncpg
 - Alembic
 
-## Agentic AI
+### Agentic AI
 
 - LangGraph
 - LangChain
 - Google Gemini
 
-## Database / Infrastructure
+### RAG / Research
+
+- Supabase pgvector
+- Tavily
+
+### Infrastructure
 
 - Supabase PostgreSQL
-- pgvector
 - Supabase Auth
 - Supabase Storage
 - Supabase Realtime
 
-## Research
-
-- Tavily
-
-## Artifacts
+### Artifacts
 
 - ReportLab
 - python-pptx
 
-## Frontend
+### Frontend
 
 - Next.js
 - React
@@ -720,13 +758,37 @@ LLM tests should validate **structured outputs and behavior**, not exact generat
 
 ---
 
-# 18. Final Project Definition
+# 20. Architecture Rules
 
-**IDEON is a stateful multi-agent AI platform that transforms startup ideas into structured, research-backed startup plans.**
+1. The frontend communicates only with FastAPI.
+2. LangGraph controls workflow orchestration.
+3. Agents perform specialized AI reasoning.
+4. The Startup State is the central source of application context.
+5. Services coordinate application logic.
+6. Repositories handle database operations.
+7. Pydantic schemas define structured contracts.
+8. RAG provides persistent knowledge retrieval.
+9. Tavily provides live web research.
+10. Deterministic Python code handles calculations where appropriate.
+11. Important claims should retain evidence or clearly state when they are assumptions or estimates.
+12. Supabase provides database, authentication, storage, and realtime infrastructure.
+13. Important intermediate results are persisted.
+14. Secrets remain server-side.
+15. Selective re-execution recalculates only affected components.
+16. Artifacts are generated from structured startup outputs.
+17. The project remains a modular monolith.
+
+---
+
+# 21. Final Definition
+
+**IDEON is a stateful, evidence-backed multi-agent AI platform that helps founders evaluate, plan, and iteratively refine startup ideas.**
 
 Its core system combines:
 
 ```text
+Startup State
+      +
 Multi-Agent AI
       +
 LangGraph
@@ -737,38 +799,46 @@ RAG
       +
 Live Web Research
       +
-PostgreSQL / pgvector
+Evidence & Assumption Tracking
       +
-Artifact Generation
+Contradiction Detection
+      +
+Validation Experiments
       +
 Selective Re-execution
+      +
+Artifact Generation
 ```
 
-The primary workflow is:
+The defining loop is:
 
 ```text
 Startup Idea
     ↓
-Multi-Agent Analysis
+Build Startup State
     ↓
-Structured Startup State
+Research + Multi-Agent Analysis
     ↓
-Research + RAG
+Evidence & Assumption Evaluation
     ↓
-Startup Plan + Artifacts
+Risks / Contradictions
     ↓
-AI Startup Consultant
+Strategic Verdict
     ↓
-User Changes Assumption
+Recommended Validation Experiments
+    ↓
+Founder Action / New Information
+    ↓
+Update Startup State
     ↓
 Impact Analysis
     ↓
 Selective Re-execution
     ↓
-Updated Startup Plan
+Updated Startup Strategy
 ```
 
-The primary technical goal is to build a **reliable, stateful, modular multi-agent AI system**, rather than simply a collection of LLM prompts.
+The primary technical goal is to build a **reliable, stateful, evidence-aware, modular multi-agent AI system** rather than simply a collection of LLM prompts.
 
 
 

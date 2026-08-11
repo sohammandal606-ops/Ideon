@@ -2,35 +2,43 @@
 
 ## Development Strategy
 
-IDEON will be built incrementally as a **Python modular monolith** with a Next.js frontend.
+IDEON will be built as a **Python modular monolith** with a FastAPI backend and a Next.js frontend.
 
-The implementation priority is:
+The implementation should prioritize the core differentiator:
+
+> **A stateful, evidence-backed startup model that can detect dependencies and selectively re-execute affected analysis when assumptions change.**
+
+Build incrementally rather than creating the entire architecture at once.
 
 ```text
-Project Foundation
-        ↓
-Database + Authentication
-        ↓
+Foundation
+    ↓
+Database + Auth
+    ↓
 Core API
-        ↓
+    ↓
+Startup State
+    ↓
 LLM Infrastructure
-        ↓
-Core Agents
-        ↓
+    ↓
+First Agent
+    ↓
 LangGraph Workflow
-        ↓
-Web Research + RAG
-        ↓
-Financial Engine
-        ↓
-Artifact Generation
-        ↓
-Startup Chat
-        ↓
+    ↓
+Research + RAG
+    ↓
+Evidence + Assumptions
+    ↓
+Contradiction Detection
+    ↓
+Validation Experiments
+    ↓
 Selective Re-execution
-        ↓
-Frontend + Realtime
-        ↓
+    ↓
+Artifacts + Chat
+    ↓
+Next.js + Realtime
+    ↓
 Testing + Deployment
 ```
 
@@ -39,22 +47,25 @@ Testing + Deployment
 # Phase 1 — Project Foundation
 
 ### Goal
-Set up the development environment and minimal backend.
+
+Create a clean, runnable backend foundation.
 
 ### Tasks
 
-- Configure Python environment with `uv`.
-- Set up backend package structure.
-- Configure `requirements.txt`.
+- Configure Python 3.12+.
+- Configure `uv`.
+- Set up `pyproject.toml`.
+- Generate and commit `uv.lock`.
 - Configure `.env` and `.env.example`.
 - Set up FastAPI.
 - Create `/api/v1/`.
-- Add basic application configuration.
-- Add health endpoint.
+- Configure application settings with Pydantic Settings.
+- Add basic logging and exception handling.
+- Add a health endpoint.
 
 ### Deliverable
 
-A running FastAPI backend with:
+A minimal FastAPI application that runs successfully.
 
 ```text
 GET /api/v1/health
@@ -65,21 +76,22 @@ GET /api/v1/health
 # Phase 2 — Database + Authentication
 
 ### Goal
+
 Establish persistent storage and user authentication.
 
 ### Tasks
 
 - Connect to Supabase PostgreSQL.
 - Configure async SQLModel/SQLAlchemy.
-- Configure Psycopg 3.
-- Initialize Alembic.
-- Create core database models.
-- Create repositories.
+- Use `asyncpg` as the PostgreSQL driver.
+- Configure Alembic.
+- Create initial database models.
+- Create repository layer.
 - Integrate Supabase Auth.
 - Implement authentication dependencies.
-- Implement startup ownership.
+- Implement startup ownership and authorization.
 
-### Core entities
+### Initial entities
 
 ```text
 User
@@ -102,64 +114,123 @@ An authenticated user can create and manage their own startup data.
 # Phase 3 — Core API
 
 ### Goal
-Build the API layer required by the application.
+
+Build the application API before adding complex AI functionality.
 
 ### Tasks
 
 Implement endpoints for:
 
-- Authentication
-- User information
+- Authentication/user information
 - Startups
 - Founder profiles
 - Startup configuration
 - Analysis runs
 - Artifacts
-- Chat
+- Chat sessions/messages
+
+Follow:
+
+```text
+API
+ ↓
+Service
+ ↓
+Repository
+ ↓
+Database
+```
 
 ### Deliverable
 
-The backend can manage the complete startup lifecycle without AI functionality.
+The backend can manage the startup lifecycle without AI.
 
 ---
 
-# Phase 4 — LLM Infrastructure
+# Phase 4 — Startup State
 
 ### Goal
-Create a reusable Gemini integration.
+
+Create the central structured representation of a startup.
+
+The **Startup State** becomes the main context shared across the AI system.
+
+### State should represent
+
+- Startup idea
+- Problem
+- Solution
+- Target customer
+- Market
+- Pricing
+- Business model
+- Financial assumptions
+- MVP
+- GTM
+- Founder constraints
+- Analysis outputs
+- Risks
+- Evidence
+- Assumptions
 
 ### Tasks
 
-- Configure Gemini.
-- Create centralized Gemini client.
-- Configure model settings.
-- Implement structured output handling.
-- Define Pydantic output contracts.
-- Add common LLM error handling.
-- Organize agent prompts.
+- Define the shared state schema.
+- Separate user-provided information from generated information.
+- Define state update rules.
+- Define versioning requirements.
+- Ensure state can be persisted and reconstructed.
 
 ### Deliverable
 
-A reliable flow:
-
-```text
-Context
- ↓
-Prompt
- ↓
-Gemini
- ↓
-Structured Output
- ↓
-Validation
-```
+A startup can be represented as a structured state independent of the UI.
 
 ---
 
-# Phase 5 — Core Agents
+# Phase 5 — LLM Infrastructure
 
 ### Goal
-Build each specialized agent independently before connecting them to LangGraph.
+
+Create reusable and reliable Gemini integration.
+
+### Tasks
+
+- Configure Google Gemini.
+- Create centralized LLM client.
+- Configure model settings.
+- Create prompt management utilities.
+- Implement structured output handling.
+- Define Pydantic output contracts.
+- Implement validation and error handling.
+- Add retry handling where appropriate.
+
+### Standard agent flow
+
+```text
+Startup State / Context
+        ↓
+Prompt
+        ↓
+Gemini
+        ↓
+Structured Output
+        ↓
+Pydantic Validation
+        ↓
+State Update
+```
+
+### Deliverable
+
+A reusable LLM infrastructure that agents can use consistently.
+
+---
+
+# Phase 6 — Core Agents
+
+### Goal
+
+Implement the primary reasoning components independently before connecting the complete workflow.
 
 Implement in this order:
 
@@ -167,7 +238,7 @@ Implement in this order:
 2. Market Research
 3. Competitor Analysis
 4. Business Model
-5. Financial
+5. Financial Analysis
 6. MVP Planner
 7. GTM
 8. Verdict
@@ -175,38 +246,39 @@ Implement in this order:
 For each agent:
 
 ```text
-Input
- ↓
-Required Context
- ↓
-Prompt
- ↓
-Gemini
- ↓
+Input Context
+     ↓
+Reasoning
+     ↓
 Structured Output
- ↓
+     ↓
 Validation
 ```
 
+### Important rule
+
+Agents should produce **structured outputs**, not large unstructured text blobs.
+
 ### Deliverable
 
-Every core agent produces a validated structured result independently.
+Each core agent can run independently and return a validated result.
 
 ---
 
-# Phase 6 — LangGraph Workflow
+# Phase 7 — Initial LangGraph Workflow
 
 ### Goal
-Connect the agents into the main multi-agent workflow.
+
+Connect the core agents into a stateful workflow.
 
 ### Tasks
 
-- Define shared startup state.
+- Define LangGraph state.
 - Create graph nodes.
 - Connect agents to nodes.
-- Define graph edges.
-- Implement execution order.
-- Persist important intermediate outputs.
+- Define execution order.
+- Add conditional routing where necessary.
+- Persist important outputs.
 - Track analysis status.
 - Handle node failures.
 
@@ -227,72 +299,71 @@ Competitor Analysis ─┘
                          ↓
                         GTM
                          ↓
-                ┌────────┴────────┐
-                ↓                 ↓
-          Landing Page       Pitch Deck
-                └────────┬────────┘
-                         ↓
-                    Final Report
-                         ↓
                       Verdict
                          ↓
                         END
 ```
 
+Artifact generation and other secondary features should not block the core workflow.
+
 ### Deliverable
 
-A startup can be processed through the complete AI analysis workflow.
+A user can submit a startup and receive a complete structured analysis.
 
 ---
 
-# Phase 7 — Web Research
+# Phase 8 — Live Web Research
 
 ### Goal
-Provide current external information to research-heavy agents.
+
+Provide current external information to research-heavy components.
 
 ### Tasks
 
 - Integrate Tavily.
-- Build research service.
+- Create research service.
 - Normalize search results.
-- Extract relevant web content.
-- Preserve source information.
+- Extract useful page content.
+- Preserve source URLs and metadata.
+- Add source information to research outputs.
 - Integrate research into:
   - Market Research
   - Competitor Analysis
 
 ### Deliverable
 
-Research agents can use current web information with source context.
+Research-heavy agents can produce current, source-aware findings.
 
 ---
 
-# Phase 8 — RAG
+# Phase 9 — RAG
 
 ### Goal
-Add persistent startup/business knowledge retrieval.
+
+Add persistent knowledge retrieval.
 
 ### Tasks
 
 - Prepare knowledge-base documents.
-- Implement document ingestion.
-- Extract and chunk documents.
+- Implement ingestion.
+- Extract documents.
+- Chunk documents.
 - Generate embeddings.
 - Store vectors in Supabase pgvector.
 - Implement retrieval.
-- Integrate RAG service with relevant agents.
+- Integrate retrieved context into relevant agents.
 
 ### Flow
 
 ```text
-Documents
- ↓
+Knowledge Base
+     ↓
 Extraction
- ↓
+     ↓
 Chunking
- ↓
+     ↓
 Embeddings
- ↓
+     ↓
 pgvector
 ```
 
@@ -301,36 +372,98 @@ Runtime:
 ```text
 Agent
  ↓
-RAG Service
- ↓
 Retriever
  ↓
-pgvector
+Relevant Knowledge
  ↓
-Relevant Context
+Agent Context
 ```
 
 ### Deliverable
 
-Agents can combine startup information, web research, and RAG knowledge.
+IDEON can combine startup state, live research, and persistent domain knowledge.
 
 ---
 
-# Phase 9 — Financial Engine
+# Phase 10 — Evidence + Assumption System
 
 ### Goal
-Separate deterministic financial calculations from LLM reasoning.
+
+Make the startup analysis evidence-aware.
+
+### Core distinction
+
+Important information should be classified as:
+
+```text
+FACT
+ASSUMPTION
+ESTIMATE
+INFERENCE
+RECOMMENDATION
+```
+
+### Tasks
+
+Introduce concepts such as:
+
+```text
+StartupAssumption
+Evidence
+```
+
+Track for important assumptions:
+
+- Value
+- Confidence
+- Impact
+- Supporting evidence
+- Validation status
+- Source
+- Last updated
+
+### Example
+
+```text
+Assumption:
+Students will pay ₹299/month.
+
+Confidence:
+Medium
+
+Impact:
+High
+
+Evidence:
+Competitor pricing + market research
+
+Validation:
+Pending
+```
+
+### Deliverable
+
+IDEON can identify important assumptions and distinguish them from evidence-backed findings.
+
+---
+
+# Phase 11 — Deterministic Financial Engine
+
+### Goal
+
+Keep financial calculations reliable and reproducible.
 
 ### Tasks
 
 - Define financial assumptions.
-- Calculate revenue.
-- Calculate costs.
-- Project customers.
-- Calculate break-even.
-- Calculate profit.
-- Implement financial scenarios.
-- Connect calculations to the Financial Agent.
+- Implement customer projections.
+- Implement revenue calculations.
+- Implement cost calculations.
+- Implement break-even calculations.
+- Implement profit calculations.
+- Support scenarios.
+- Validate numerical inputs.
+- Connect the Financial Agent to the calculation engine.
 
 ### Architecture
 
@@ -344,106 +477,156 @@ Python Calculation Engine
 Calculated Results
 ```
 
+The LLM proposes or explains assumptions; Python performs deterministic calculations.
+
 ### Deliverable
 
-Financial projections are reproducible and clearly labeled as estimates.
+Financial results are reproducible and clearly labeled as estimates.
 
 ---
 
-# Phase 10 — Artifact Generation
+# Phase 12 — Contradiction + Risk Detection
 
 ### Goal
-Generate useful startup deliverables.
 
-### PDF Report
+Detect inconsistencies within the Startup State.
 
-- Define report structure.
-- Generate PDF with ReportLab.
-- Upload to Supabase Storage.
-- Store artifact metadata.
-
-### Pitch Deck
-
-- Define slide structure.
-- Create PPTX generation logic.
-- Populate startup data.
-- Upload to Supabase Storage.
-
-### Landing Page
-
-- Generate structured landing-page content.
-- Generate HTML/CSS.
-- Store the generated artifact.
-
-### Deliverable
-
-Users can generate:
+### Examples
 
 ```text
-Startup Report
-Pitch Deck
-Landing Page
+Founder Budget = ₹50,000
+Marketing Budget = ₹2,00,000
 ```
 
----
+or:
 
-# Phase 11 — Startup AI Consultant
-
-### Goal
-Build a persistent startup-specific AI consultant.
+```text
+Target Customer = Price-sensitive students
+Price = ₹4,999/month
+```
 
 ### Tasks
 
-- Implement chat sessions.
-- Store chat messages.
-- Build chat workflow.
-- Retrieve startup context.
-- Retrieve relevant agent outputs.
-- Integrate RAG where appropriate.
-- Integrate Gemini.
+- Define contradiction types.
+- Compare related startup-state fields.
+- Detect constraint violations.
+- Detect business-model inconsistencies.
+- Detect financial inconsistencies.
+- Store contradiction results.
+- Assign severity and confidence.
 
-### Flow
+### Deliverable
+
+IDEON can flag important inconsistencies instead of silently producing contradictory outputs.
+
+---
+
+# Phase 13 — Validation Experiments
+
+### Goal
+
+Convert uncertain assumptions into practical validation actions.
+
+### Tasks
+
+- Identify high-impact, low-confidence assumptions.
+- Generate testable hypotheses.
+- Generate validation experiments.
+- Define success criteria.
+- Define experiment duration.
+- Define expected decision outcomes.
+
+### Example
 
 ```text
-User Question
-     ↓
-Chat Workflow
-     ↓
-Startup Context
-     ↓
-Relevant Analysis
-     ↓
-RAG / Research
-     ↓
-Gemini
-     ↓
-Answer
+Hypothesis
+    ↓
+Experiment
+    ↓
+Success Criteria
+    ↓
+Real-World Result
+    ↓
+Continue / Modify / Reject
 ```
 
 ### Deliverable
 
-Users can continuously discuss and refine their startup using persistent context.
+IDEON can recommend concrete experiments for validating critical startup assumptions.
 
 ---
 
-# Phase 12 — Selective Re-execution
+# Phase 14 — Dependency Map + Impact Analysis
 
 ### Goal
-Implement IDEON's main advanced agentic feature.
+
+Build the dependency system required for selective re-execution.
 
 ### Tasks
 
-- Define dependencies between outputs.
-- Build dependency map.
-- Detect changed startup fields.
-- Perform impact analysis.
+Define dependencies between:
+
+- Startup fields
+- Assumptions
+- Research outputs
+- Agent outputs
+- Derived recommendations
+- Artifacts
+
+Example:
+
+```text
+Target Market
+    ↓
+Market Research
+    ↓
+Business Model
+    ↓
+Financial Analysis
+    ↓
+GTM
+    ↓
+Verdict
+```
+
+### Impact analysis
+
+When a value changes:
+
+```text
+Changed Field
+     ↓
+Dependency Graph
+     ↓
+Affected Outputs
+     ↓
+Execution Plan
+```
+
+### Deliverable
+
+IDEON can determine which outputs are stale after a startup change.
+
+---
+
+# Phase 15 — Selective Re-execution
+
+### Goal
+
+Implement the core advanced feature of IDEON.
+
+### Tasks
+
+- Detect changed startup state.
+- Compare state versions.
+- Run impact analysis.
 - Identify affected agents.
 - Invalidate stale outputs.
-- Re-run affected nodes.
+- Re-run only affected LangGraph nodes.
 - Preserve unaffected outputs.
-- Recalculate downstream outputs.
-- Update dependent artifacts.
-- Track analysis versions.
+- Recalculate downstream dependencies.
+- Update analysis versions.
+- Prevent stale outputs from being presented as current.
 
 ### Example
 
@@ -452,32 +635,112 @@ Target Market Changed
         ↓
 Impact Analysis
         ↓
-Affected Components
-        ↓
-Selective Re-execution
-        ↓
-Updated Results
+Market Research       → RE-RUN
+Competitor Analysis   → RE-RUN
+Business Model        → RE-RUN
+Financial Analysis    → RE-RUN
+MVP                   → RE-RUN
+GTM                   → RE-RUN
+Verdict               → RE-RUN
 ```
 
 ### Deliverable
 
-Changing one startup assumption does not unnecessarily restart the entire analysis.
+Changing one important assumption does not require restarting the entire analysis.
 
 ---
 
-# Phase 13 — Realtime Progress
+# Phase 16 — Startup AI Consultant
 
 ### Goal
-Provide live analysis progress to the frontend.
 
-IDEON will use **Supabase Realtime** instead of maintaining a custom FastAPI WebSocket layer.
+Provide a persistent startup-specific AI consultant.
 
 ### Tasks
 
-- Persist analysis status/progress.
-- Update current agent and status during workflow execution.
-- Configure Supabase Realtime subscriptions.
-- Connect the frontend to relevant database changes.
+- Implement chat sessions.
+- Persist messages.
+- Build chat workflow.
+- Retrieve Startup State.
+- Retrieve relevant agent outputs.
+- Retrieve evidence and assumptions.
+- Integrate RAG where appropriate.
+- Integrate Gemini.
+- Keep answers grounded in the startup context.
+
+### Flow
+
+```text
+User Question
+      ↓
+Chat Workflow
+      ↓
+Startup State
+      ↓
+Relevant Outputs
+      ↓
+Evidence / RAG
+      ↓
+Gemini
+      ↓
+Answer
+```
+
+### Deliverable
+
+Users can continuously discuss and refine their startup.
+
+---
+
+# Phase 17 — Artifact Generation
+
+### Goal
+
+Generate useful outputs from structured startup intelligence.
+
+### Artifacts
+
+- PDF startup report
+- PowerPoint pitch deck
+- Landing-page output
+
+### Architecture
+
+```text
+Structured Startup State
+        ↓
+Artifact Service
+        ↓
+Generated Artifact
+        ↓
+Supabase Storage
+        ↓
+Artifact Metadata
+```
+
+Artifacts should consume structured outputs rather than independently performing startup reasoning.
+
+### Deliverable
+
+Users can generate and retrieve useful startup artifacts.
+
+---
+
+# Phase 18 — Realtime Progress
+
+### Goal
+
+Show live analysis progress in the frontend.
+
+IDEON will use **Supabase Realtime** rather than a custom FastAPI WebSocket layer.
+
+### Tasks
+
+- Persist analysis status.
+- Persist current agent/progress information.
+- Update progress during LangGraph execution.
+- Configure Supabase Realtime.
+- Subscribe from the frontend.
 
 ### Flow
 
@@ -495,31 +758,34 @@ Next.js
 
 ### Deliverable
 
-Users can see analysis progress without a custom WebSocket service.
+Users can see analysis progress in real time.
 
 ---
 
-# Phase 14 — Next.js Frontend
+# Phase 19 — Next.js Frontend
 
 ### Goal
+
 Build the complete user-facing application.
 
-### User-facing features
+### Main screens
 
 - Landing page
 - Login / Signup
 - Dashboard
-- Startup creation
-- Founder profile
-- Analysis configuration
-- Analysis progress
+- Create Startup
+- Founder Profile
+- Analysis Configuration
+- Analysis Progress
 - Results
-- Artifact downloads
-- Startup chat
-- Startup editing
+- Assumptions / Evidence
+- Validation Experiments
+- Artifacts
+- Startup Chat
+- Edit Startup
 - Re-execution status
 
-### Architecture rule
+### Architecture
 
 ```text
 Next.js
@@ -529,79 +795,85 @@ FastAPI
 Backend
 ```
 
-The frontend must not directly access Gemini, Tavily, or the database.
+The frontend must not directly access Gemini, Tavily, or PostgreSQL.
 
 ### Deliverable
 
-A complete frontend connected to the backend API.
+A complete user-facing IDEON application.
 
 ---
 
-# Phase 15 — Testing and Hardening
+# Phase 20 — Testing and Hardening
 
-### Unit Tests
+## Unit Tests
 
 Test:
 
 - Agents
 - Graph nodes
-- Workflows
 - Services
-- Financial calculations
-- Dependency analysis
 - Repositories
+- Financial calculations
+- Assumption logic
+- Contradiction detection
+- Dependency analysis
+- Impact analysis
 
-### Integration Tests
+## Integration Tests
 
 Test:
 
 - API
 - Database
 - Authentication
-- Workflow execution
+- LangGraph workflows
 - Persistence
+- Selective re-execution
 
-### Workflow Tests
+## Workflow Tests
 
 Test:
 
 - Complete analysis
-- Node failures
+- Failed agent
 - State updates
-- Selective re-execution
 - Dependency propagation
+- Changed assumptions
+- Partial re-execution
+- Stale-output prevention
 
-### Validation
+## LLM Tests
 
-Verify:
+Validate:
 
 - Structured output schemas
 - Required fields
-- Value ranges
-- User ownership
-- Error handling
+- Valid values
+- Expected behavior
 
-LLM tests should validate structured behavior rather than exact generated wording.
+Do not rely on exact generated prose.
 
 ### Deliverable
 
-A stable backend with reliable core workflows and meaningful test coverage.
+A stable backend with meaningful test coverage around the core intelligence loop.
 
 ---
 
-# Phase 16 — Deployment
+# Phase 21 — Deployment
 
 ### Goal
+
 Deploy a production-ready version.
 
 ### Tasks
 
 - Add Docker configuration.
 - Configure production environment variables.
-- Build backend container.
+- Build backend image.
 - Build frontend.
 - Configure Supabase.
-- Configure Supabase Storage.
+- Configure Storage.
+- Configure Realtime.
 - Configure deployment platform.
 - Configure HTTPS.
 - Configure logging.
@@ -613,29 +885,9 @@ A publicly accessible IDEON application.
 
 ---
 
-# Phase 17 — Final Polish
-
-### Goal
-Prepare IDEON for demonstration and portfolio use.
-
-### Tasks
-
-- Fix remaining bugs.
-- Improve UI/UX.
-- Optimize slow workflows.
-- Improve error handling.
-- Review security.
-- Remove unused dependencies.
-- Improve API documentation.
-- Complete README.
-- Add architecture documentation.
-- Prepare final demo.
-
----
-
 # 3-Month Development Plan
 
-## Month 1 — Core AI System
+## Month 1 — Foundation + Core AI
 
 ### Weeks 1–2
 
@@ -643,53 +895,57 @@ Prepare IDEON for demonstration and portfolio use.
 - Database
 - Authentication
 - Core API
+- Startup State
 
 ### Weeks 3–4
 
 - Gemini integration
 - Structured outputs
-- Core agents
-- LangGraph state
-- Initial workflow
+- Idea Validator
+- Market Research
+- Competitor Analysis
+- Initial LangGraph workflow
 
 ### Milestone
 
-> A user can submit a startup idea and receive a complete core multi-agent analysis.
+> A user can create a startup and receive a structured multi-agent analysis.
 
 ---
 
-## Month 2 — Research and Startup Intelligence
+## Month 2 — Intelligence Layer
 
 ### Weeks 5–6
 
+- Remaining core agents
 - Tavily research
-- Web extraction
-- RAG ingestion
+- RAG
 - pgvector
-- Retrieval
+- Evidence system
+- Assumption tracking
 
 ### Weeks 7–8
 
 - Financial engine
-- PDF report
-- Pitch deck
-- Landing page
-- Verdict refinement
+- Contradiction detection
+- Risk analysis
+- Validation experiments
+- Dependency map
+- Impact analysis
 
 ### Milestone
 
-> IDEON can produce research-backed startup analysis and useful startup artifacts.
+> IDEON can analyze a startup using research, evidence, assumptions, deterministic calculations, and consistency checks.
 
 ---
 
-## Month 3 — Advanced Features and Product
+## Month 3 — Core Differentiator + Product
 
 ### Weeks 9–10
 
-- Startup Chat
-- Dependency map
-- Impact analysis
 - Selective re-execution
+- Startup AI Consultant
+- Artifact generation
+- Analysis versioning
 
 ### Week 11
 
@@ -700,6 +956,7 @@ Prepare IDEON for demonstration and portfolio use.
 ### Week 12
 
 - Testing
+- Security review
 - Bug fixing
 - Docker
 - Deployment
@@ -708,28 +965,34 @@ Prepare IDEON for demonstration and portfolio use.
 
 ### Final Milestone
 
-> A user can create a startup, run a multi-agent analysis, view results and artifacts, consult the AI, change assumptions, selectively re-run affected components, and receive updated results.
+> A user can create a startup, run a research-backed multi-agent analysis, inspect assumptions and evidence, identify risks and contradictions, generate validation experiments, change an assumption, selectively re-run affected analysis, and receive an updated startup strategy.
 
 ---
 
 # Development Priorities
 
-If time becomes limited, prioritize:
+If time becomes limited, prioritize the following:
 
 ```text
-1. Core LangGraph workflow
-2. Structured agent outputs
-3. Database/state persistence
-4. Web research
-5. Selective re-execution
-6. RAG
-7. Financial engine
-8. Startup chat
-9. Artifact generation
-10. Frontend polish
+1. Startup State
+2. Core LangGraph workflow
+3. Structured agent outputs
+4. Database persistence
+5. Web research
+6. Assumption + evidence system
+7. Dependency map
+8. Selective re-execution
+9. Contradiction detection
+10. Financial engine
+11. Startup chat
+12. RAG
+13. Artifact generation
+14. Frontend polish
 ```
 
-Do not add additional features at the expense of workflow reliability.
+The **Startup State → Impact Analysis → Selective Re-execution** loop is the highest-priority feature.
+
+Do not sacrifice this core architecture to add more superficial AI features.
 
 ---
 
@@ -744,31 +1007,38 @@ Create Startup
     ↓
 Enter Founder Profile
     ↓
-Configure Analysis
+Configure Startup
     ↓
-Run AI Analysis
+Run Multi-Agent Analysis
     ↓
 View Progress
     ↓
-View Multi-Agent Results
+Review Results
     ↓
-Receive Final Verdict
+Inspect Evidence & Assumptions
     ↓
-Generate / Download Artifacts
+See Risks / Contradictions
+    ↓
+Receive Strategic Verdict
+    ↓
+Generate Validation Experiments
     ↓
 Chat with AI Consultant
     ↓
-Modify Startup Assumption
+Change an Important Assumption
     ↓
 Run Impact Analysis
     ↓
 Re-run Only Affected Components
     ↓
-View Updated Results
+View Updated Startup Strategy
+    ↓
+Generate / Download Artifacts
 ```
 
 At completion, IDEON should demonstrate:
 
-**Multi-Agent AI + LangGraph + Gemini + RAG + Web Research + Structured Outputs + PostgreSQL/pgvector + Artifact Generation + Selective Re-execution.**
+**Startup State + Multi-Agent AI + LangGraph + Gemini + RAG + Live Research + Evidence + Assumption Tracking + Contradiction Detection + Validation Experiments + Selective Re-execution + PostgreSQL/pgvector + Artifact Generation.**
+
 
 
