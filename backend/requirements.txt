@@ -1,69 +1,39 @@
-# =========================
-# Backend
-# =========================
-
+# --- API layer ---
 fastapi
 uvicorn[standard]
+websockets
 pydantic
 pydantic-settings
-python-multipart
 
+# --- Agent orchestration ---
+langgraph
+langchain
 
-# =========================
-# Database
-# =========================
-
+# --- Database / ORM ---
 sqlmodel
-psycopg[binary]
+asyncpg
+alembic
+pgvector
 
-
-# =========================
-# Supabase
-# Auth + Storage
-# =========================
-
+# --- Supabase (auth, storage, postgres) ---
 supabase
 
-
-# =========================
-# LangChain / LangGraph
-# =========================
-
-langchain
-langgraph
-langchain-google-genai
-langchain-community
-langchain-text-splitters
-
-
-# =========================
-# Web Research
-# =========================
-
+# --- Web research ---
 tavily-python
-httpx
-beautifulsoup4
 
-
-# =========================
-# RAG / Documents
-# =========================
-
+# --- Document processing (RAG ingestion) ---
 pypdf
+beautifulsoup4
+lxml
 
-
-# =========================
-# Artifact Generation
-# =========================
-
+# --- Artifact generation ---
 reportlab
 python-pptx
 
-
-# =========================
-# Testing
-# =========================
-
+# --- Testing ---
 pytest
 pytest-asyncio
+httpx
 
+# --- Config ---
+python-dotenv

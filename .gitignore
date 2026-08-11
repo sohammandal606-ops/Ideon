@@ -1,0 +1,175 @@
+# ============================================================
+# IDEON
+# Python / FastAPI + Next.js + Supabase
+# ============================================================
+
+
+# ============================================================
+# Environment Variables / Secrets
+# ============================================================
+
+# Environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local environment files
+**/*.local
+
+
+# ============================================================
+# Python
+# ============================================================
+
+# Bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+
+# Packaging
+**/build/
+**/dist/
+*.egg-info/
+.eggs/
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# Test environments
+.tox/
+.nox/
+
+
+# ============================================================
+# Node.js / Next.js
+# ============================================================
+
+# Dependencies
+**/node_modules/
+
+# Next.js build output
+**/.next/
+**/out/
+
+# Turbopack
+**/.turbo/
+
+# Vercel
+**/.vercel/
+
+# TypeScript build information
+*.tsbuildinfo
+
+# npm logs
+npm-debug.log*
+npm-error.log*
+
+# Yarn logs
+yarn-debug.log*
+yarn-error.log*
+
+# pnpm logs
+pnpm-debug.log*
+
+# Yarn Plug'n'Play
+.pnp
+.pnp.js
+.pnp.cjs
+
+
+# ============================================================
+# Jupyter
+# ============================================================
+
+**/.ipynb_checkpoints/
+
+
+# ============================================================
+# IDE / Editors
+# ============================================================
+
+.vscode/
+.idea/
+
+*.swp
+*.swo
+*~
+
+
+# ============================================================
+# Operating System
+# ============================================================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+
+# ============================================================
+# Logs
+# ============================================================
+
+*.log
+**/logs/
+
+
+# ============================================================
+# Temporary Files
+# ============================================================
+
+*.tmp
+*.temp
+**/tmp/
+**/temp/
+
+
+# ============================================================
+# Local Databases
+# ============================================================
+
+*.db
+*.sqlite
+*.sqlite3
+
+
+# ============================================================
+# Generated Files
+# ============================================================
+
+**/generated/
+
+
+# ============================================================
+# Local RAG Processing
+# ============================================================
+
+**/knowledge_base/.cache/
+**/knowledge_base/processed/
+**/knowledge_base/indexes/
+
+
+# ============================================================
+# Credentials / Certificates
+# ============================================================
+
+credentials.json
+service-account.json
+
+*.pem
+*.key
+*.p12
+*.pfx
