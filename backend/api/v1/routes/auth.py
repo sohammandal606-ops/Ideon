@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from core.supabase_client import supabase
 from schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserResponse
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
 @router.post("/signup")

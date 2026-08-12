@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 
 from db.connection import get_db, engine
 from api.v1.routes.auth import router as auth_router
+from api.v1.routes.user_router import router as user_router
 # from api.sessions import router as sessions_router
 
 
@@ -36,12 +37,13 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(user_router)
 # app.include_router(sessions_router)
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "ideon"}
+    return {"status": "ok", "service": "verity"}
 
 
 @app.get("/db-health")
