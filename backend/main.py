@@ -41,7 +41,7 @@ app.include_router(auth_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "verity"}
+    return {"status": "ok", "service": "ideon"}
 
 
 @app.get("/db-health")
