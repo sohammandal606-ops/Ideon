@@ -1,1 +1,1 @@
-
+"""IDEON backend application package."""

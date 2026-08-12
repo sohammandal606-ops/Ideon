@@ -1,6 +1,16 @@
+"""Request/response shapes for user profile endpoints.
+
+- UserResponse: serializes a SQLModel User object (from_attributes=True)
+- UserUpdate:   validates PATCH /users/me body (only `name` is mutable)
+- UserStats:    structures the aggregate stats response
+
+Used by: api.v1.routes.users
+"""
+
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserResponse(BaseModel):
@@ -15,12 +25,9 @@ class UserResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    name: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=100
-    )
-    email: EmailStr | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class UserStats(BaseModel):
