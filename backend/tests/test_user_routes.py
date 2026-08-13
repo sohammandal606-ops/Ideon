@@ -61,18 +61,23 @@ class FakeUserService:
         }
 
 
+# @pytest.fixture(autouse=True) means this function runs automatically
+# before every single test. It clears any overrides so tests don't pollute each other.
 @pytest.fixture(autouse=True)
 def clear_overrides():
     yield
     app.dependency_overrides.clear()
 
 
+# A fixture that creates a fake browser (TestClient) to make requests to our API.
 @pytest.fixture
 def client():
     return TestClient(app)
 
 
 def authenticate_as_test_user():
+    # We replace the real dependencies with our fakes using dependency_overrides.
+    # When a route asks for get_current_user, FastAPI gives it this lambda instead.
     app.dependency_overrides[get_current_user] = lambda: {
         "sub": str(PROFILE["auth_user_id"]),
         "email": PROFILE["email"],

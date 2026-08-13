@@ -4,27 +4,35 @@ All database access flows through get_database_session(), which yields one
 AsyncSession per request. Routes receive it via the DatabaseSession type
 alias defined in api.v1.deps, then pass it to services and repositories.
 
+Note: SQLModel does not provide its own async engine or session factory,
+so we import those two things from sqlalchemy. Everything else uses SQLModel.
+
 Depends on: core.config (DATABASE_URL)
 Used by:    api.v1.deps (DatabaseSession alias), main.py (engine disposal)
 """
 
 from collections.abc import AsyncGenerator
 
+# SQLModel doesn't have its own async engine — these two imports are required.
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.config import settings
 
+# Connection pool: keeps a few database connections open and ready to use
+# so we don't create a new connection for every single request.
 engine = create_async_engine(
     settings.DATABASE_URL,
-    pool_size=4,
-    max_overflow=2,
-    pool_timeout=30,
-    pool_recycle=1800,
-    pool_pre_ping=True,
+    pool_size=4,        # keep 4 connections open at all times
+    max_overflow=2,     # allow 2 extra connections during traffic spikes
+    pool_timeout=30,    # wait up to 30s for a free connection
+    pool_recycle=1800,  # replace connections older than 30 minutes
+    pool_pre_ping=True, # test each connection before using it
 )
-# SQLModel uses SQLAlchemy's async engine internally. The application exposes
-# SQLModel sessions so repositories and future models use the SQLModel API.
+
+# Session factory: creates a new database session (like a transaction window)
+# each time we call it. expire_on_commit=False means we can still read data
+# from objects after committing without hitting the DB again.
 session_factory = async_sessionmaker(
     engine,
     class_=AsyncSession,

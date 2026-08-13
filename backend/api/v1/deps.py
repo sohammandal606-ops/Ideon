@@ -19,9 +19,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from core.supabase_client import supabase_client
 from db.connection import get_database_session
 
+# Extracts the "Bearer <token>" header from incoming requests automatically.
 security = HTTPBearer(auto_error=True)
-BearerCredentials = Annotated[HTTPAuthorizationCredentials, Depends(security)]
 
+# Type aliases using Annotated + Depends: when a route parameter has one of
+# these types, FastAPI automatically calls the dependency function and injects
+# the result. No manual wiring needed.
+BearerCredentials = Annotated[HTTPAuthorizationCredentials, Depends(security)]
 DatabaseSession = Annotated[AsyncSession, Depends(get_database_session)]
 
 
@@ -38,6 +42,8 @@ async def get_current_user(
     """Validate Bearer token with Supabase Auth and return authenticated user dict."""
     token = credentials.credentials
     try:
+        # Supabase SDK is synchronous — to_thread runs it in a background
+        # thread so it doesn't block the async event loop.
         auth_response = await asyncio.to_thread(supabase_client.auth.get_user, token)
         if not auth_response or not auth_response.user:
             raise HTTPException(
@@ -52,6 +58,8 @@ async def get_current_user(
     except HTTPException:
         raise
     except Exception:
+        # "from None" hides the original traceback from the client — we
+        # already logged it, so the user just sees a clean 401 error.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

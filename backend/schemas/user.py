@@ -14,6 +14,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserResponse(BaseModel):
+    # from_attributes=True lets Pydantic read data directly from a SQLModel
+    # object (like User) instead of requiring a plain dict.
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

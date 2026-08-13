@@ -37,6 +37,9 @@ async def signup(request: SignupRequest) -> SignupResponse:
     The application profile is provisioned on the user's first authenticated request.
     """
     try:
+        # The Supabase Python SDK is synchronous (it blocks).
+        # We use asyncio.to_thread to run it in the background so it
+        # doesn't freeze our async server while waiting for the network.
         response = await asyncio.to_thread(
             supabase_client.auth.sign_up,
             {
@@ -44,6 +47,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
                 "password": request.password,
             },
         )
+        # Supabase returns None for the user if the signup failed
         if response.user is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -69,6 +73,7 @@ async def signup(request: SignupRequest) -> SignupResponse:
 async def login(request: LoginRequest) -> TokenResponse:
     """Authenticate a user and return a Supabase access token."""
     try:
+        # Again, run the synchronous Supabase network call in a background thread
         response = await asyncio.to_thread(
             supabase_client.auth.sign_in_with_password,
             {

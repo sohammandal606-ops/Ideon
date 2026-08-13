@@ -7,6 +7,7 @@ Depends on: db.models.user (User table)
 Used by:    services.user_service (called by UserService)
 """
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlmodel import select
@@ -21,20 +22,21 @@ class UserRepository:
     async def get_by_auth_user_id(
         self, session: AsyncSession, auth_user_id: str
     ) -> User | None:
+        # Build a SQL query: SELECT * FROM users WHERE auth_user_id = '...'
         statement = select(User).where(
             User.auth_user_id == UUID(auth_user_id)
         )
         result = await session.exec(statement)
-        return result.first()
+        return result.first()  # returns the User or None if not found
 
     async def create_profile(
         self, session: AsyncSession, auth_user_id: str, email: str
     ) -> User:
         name = email.split("@", maxsplit=1)[0] or "Founder"
         user = User(auth_user_id=UUID(auth_user_id), email=email, name=name)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+        session.add(user)           # stage the new row for insertion
+        await session.commit()      # write it to the database
+        await session.refresh(user) # reload to get DB-generated fields (id, timestamps)
         return user
 
     async def update_name(
@@ -44,6 +46,7 @@ class UserRepository:
         if user is None:
             return None
         user.name = name
+        user.updated_at = datetime.now(UTC)
         session.add(user)
         await session.commit()
         await session.refresh(user)

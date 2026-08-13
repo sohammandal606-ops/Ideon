@@ -24,13 +24,19 @@ from db.connection import engine
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Release shared infrastructure when the application stops."""
-
+    # Anything before the 'yield' runs when the server starts up.
+    # In this case, we don't need to do anything on startup.
     yield
+
+    # Anything after the 'yield' runs when the server is shutting down.
+    # Here, we close all database connections cleanly.
     await engine.dispose()
 
 
 app = FastAPI(title="IDEON API", lifespan=lifespan)
 
+# CORS (Cross-Origin Resource Sharing) middleware allows our frontend
+# (running on localhost:3000) to securely make requests to this API.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -38,10 +44,11 @@ app.add_middleware(
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PATCH, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
 
+# Connect our route files to the main app so FastAPI knows about them
 app.include_router(auth_router)
 app.include_router(users_router)
 

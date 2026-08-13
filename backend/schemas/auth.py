@@ -12,10 +12,12 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class SignupRequest(BaseModel):
+    # extra="forbid" means if someone sends {"email": "...", "age": 25},
+    # the request is rejected because "age" is not a defined field.
     model_config = ConfigDict(extra="forbid")
 
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    email: EmailStr                              # must be a valid email format
+    password: str = Field(min_length=8, max_length=128)  # at least 8 characters
 
 
 class LoginRequest(BaseModel):
