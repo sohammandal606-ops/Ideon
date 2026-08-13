@@ -35,3 +35,4 @@ class UserStats(BaseModel):
     completed_analysis: int = Field(default=0, ge=0)
     reports_generated: int = Field(default=0, ge=0)
     pitch_decks_generated: int = Field(default=0, ge=0)
+
