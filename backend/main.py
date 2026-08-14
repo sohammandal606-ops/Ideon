@@ -17,6 +17,7 @@ from sqlmodel import text
 
 from api.v1.deps import DatabaseSession
 from api.v1.routes.auth import router as auth_router
+from api.v1.routes.startups import router as startups_router
 from api.v1.routes.users import router as users_router
 from db.connection import engine
 
@@ -51,6 +52,7 @@ app.add_middleware(
 # Connect our route files to the main app so FastAPI knows about them
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(startups_router)
 
 
 @app.get("/api/v1/health", tags=["health"])

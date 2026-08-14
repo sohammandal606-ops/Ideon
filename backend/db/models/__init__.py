@@ -1,5 +1,6 @@
 """SQLModel table definitions for IDEON domain entities."""
 
-from db.models.user import User
+from .startup import Startup
+from .user import User
 
-__all__ = ["User"]
+__all__ = ["User", "Startup"]
