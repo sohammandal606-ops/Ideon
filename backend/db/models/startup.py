@@ -8,7 +8,6 @@ Used by:    db.repositories.startup_repository
 """
 
 from datetime import UTC, datetime
-from typing import Optional
 from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
@@ -31,16 +30,9 @@ class Startup(SQLModel, table=True):
     description: str
 
     # Optional fields that the user might not know yet
-    problem: Optional[str] = Field(default=None)
-    solution: Optional[str] = Field(default=None)
-    target_market: Optional[str] = Field(default=None)
-    
-    # Extra fields added by your friend
-    industry: Optional[str] = Field(default=None, max_length=100)
-    stage: Optional[str] = Field(default=None, max_length=50)
-    business_model: Optional[str] = Field(default=None, max_length=2000)
-    unique_value_proposition: Optional[str] = Field(default=None, max_length=2000)
-    competitors: Optional[str] = Field(default=None, max_length=3000)
+    problem: str | None = Field(default=None)
+    solution: str | None = Field(default=None)
+    target_market: str | None = Field(default=None)
 
     # Automatically set timestamps
     created_at: datetime = Field(

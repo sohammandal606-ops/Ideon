@@ -8,7 +8,6 @@ Used by: api.v1.routes.users
 """
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -23,7 +22,6 @@ class UserResponse(BaseModel):
     auth_user_id: UUID
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    plan: str = "free"  # Default plan as requested by your friend
     created_at: datetime
     updated_at: datetime
 
@@ -32,8 +30,6 @@ class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str | None = Field(default=None, min_length=1, max_length=100)
-    email: Optional[EmailStr] = None
-    plan: Optional[str] = Field(default=None, max_length=50)
 
 
 class UserStats(BaseModel):

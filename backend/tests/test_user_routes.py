@@ -2,9 +2,9 @@
 
 Overrides three FastAPI dependencies so tests run without Supabase or a
 real database:
-  - get_current_user  → returns a hardcoded authenticated user
-  - get_user_service  → returns FakeUserService with canned responses
-  - get_database_session → yields None (FakeUserService ignores it)
+- get_current_user  → returns a hardcoded authenticated user
+- get_user_service  → returns FakeUserService with canned responses
+- get_database_session → yields None (FakeUserService ignores it)
 """
 
 import os

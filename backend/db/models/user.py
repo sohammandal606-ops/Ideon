@@ -21,8 +21,6 @@ class User(SQLModel, table=True):
     auth_user_id: UUID = Field(unique=True, index=True)
     name: str = Field(max_length=100)
     email: str = Field(max_length=255)
-    plan: str = Field(default="free", max_length=50)
-    
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         nullable=False,
