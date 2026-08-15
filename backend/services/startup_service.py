@@ -21,15 +21,25 @@ class StartupService:
         self.repository = repository
 
     async def create_startup(
-        self, session: AsyncSession, user_id: UUID, startup_in: StartupCreate
-    ) -> Startup:
-        return await self.repository.create(session, user_id, startup_in)
+        self, 
+        session: AsyncSession,
+        user_id: UUID, 
+        startup_in: StartupCreate
+    ) ->Startup:
+        return await self.repository.create(session,
+                                            user_id,
+                                            startup_in)
 
-    async def get_all_startups(self, session: AsyncSession, user_id: UUID) -> list[Startup]:
+    async def get_all_startups(self,
+                               session: AsyncSession,
+                               user_id: UUID) -> list[Startup]:
         return await self.repository.get_all_for_user(session, user_id)
 
     async def get_startup(
-        self, session: AsyncSession, startup_id: UUID, user_id: UUID
+        self,
+        session: AsyncSession,
+        startup_id: UUID,
+        user_id: UUID
     ) -> Startup:
         startup = await self.repository.get_by_id(session, startup_id)
         
@@ -49,16 +59,25 @@ class StartupService:
         update_data: StartupUpdate,
     ) -> Startup:
         # First, retrieve it (this also does our security check!)
-        startup = await self.get_startup(session, startup_id, user_id)
+        startup = await self.get_startup(session,
+                                         startup_id,
+                                         user_id)
         
         # Then, update it
-        return await self.repository.update(session, startup, update_data)
+        return await self.repository.update(session,
+                                            startup,
+                                            update_data)
 
     async def delete_startup(
-        self, session: AsyncSession, startup_id: UUID, user_id: UUID
+        self,
+        session: AsyncSession,
+        startup_id: UUID,
+        user_id: UUID
     ) -> None:
         # First, retrieve it (this also does our security check!)
-        startup = await self.get_startup(session, startup_id, user_id)
+        startup = await self.get_startup(session,
+                                         startup_id,
+                                         user_id)
         
         # Then, delete it
         await self.repository.delete(session, startup)

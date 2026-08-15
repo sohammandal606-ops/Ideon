@@ -18,7 +18,10 @@ class StartupRepository:
     """Handles CRUD operations for Startups."""
 
     async def create(
-        self, session: AsyncSession, user_id: UUID, startup_in: StartupCreate
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+        startup_in: StartupCreate
     ) -> Startup:
         # Create a new Startup model from the validated Pydantic data
         startup = Startup(
@@ -30,16 +33,23 @@ class StartupRepository:
         await session.refresh(startup)
         return startup
 
-    async def get_by_id(self, session: AsyncSession, startup_id: UUID) -> Startup | None:
+    async def get_by_id(self,
+                        session: AsyncSession,
+                        startup_id: UUID) -> Startup | None:
         return await session.get(Startup, startup_id)
 
-    async def get_all_for_user(self, session: AsyncSession, user_id: UUID) -> list[Startup]:
+    async def get_all_for_user(self, 
+                               session: AsyncSession,
+                               user_id: UUID) -> list[Startup]:
         statement = select(Startup).where(Startup.user_id == user_id)
         result = await session.exec(statement)
         return list(result.all())
 
     async def update(
-        self, session: AsyncSession, startup: Startup, update_data: StartupUpdate
+        self,
+        session: AsyncSession,
+        startup: Startup,
+        update_data: StartupUpdate
     ) -> Startup:
         # Only update fields that were actually provided in the request
         update_dict = update_data.model_dump(exclude_unset=True)
