@@ -1,27 +1,21 @@
-import os
+"""Creates a ChatMistralAI instance using centralized settings.
 
-from dotenv import load_dotenv
+Depends on: core.config (MISTRAL_API_KEY, MISTRAL_MODEL, MISTRAL_TEMPERATURE)
+Used by:    agents, workflows (future)
+"""
+
 from langchain_mistralai import ChatMistralAI
 
-load_dotenv()
+from core.config import settings
 
 
 def get_llm() -> ChatMistralAI:
-    api_key = os.getenv("MISTRAL_API_KEY")
-
-    if not api_key:
-        raise ValueError(
-            "MISTRAL_API_KEY is not configured."
-        )
+    if settings.MISTRAL_API_KEY is None:
+        raise ValueError("MISTRAL_API_KEY is not configured.")
 
     return ChatMistralAI(
-        model=os.getenv(
-            "MISTRAL_MODEL",
-            "mistral-large-latest"
-        ),
-        temperature=float(
-            os.getenv("MISTRAL_TEMPERATURE", "0.2")
-        ),
+        model=settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE,
         max_retries=3,
-        api_key=api_key,
+        api_key=settings.MISTRAL_API_KEY.get_secret_value(),
     )

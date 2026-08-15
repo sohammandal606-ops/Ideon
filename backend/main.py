@@ -16,9 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import text
 
 from api.v1.deps import DatabaseSession
-from api.v1.routes.auth import router as auth_router
-from api.v1.routes.startups import router as startups_router
-from api.v1.routes.users import router as users_router
+from api.v1.routes import auth_router, startups_router, users_router
 from db.connection import engine
 
 

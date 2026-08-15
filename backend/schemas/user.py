@@ -20,7 +20,7 @@ class UserResponse(BaseModel):
 
     id: UUID
     auth_user_id: UUID
-    name: str = Field(..., min_length=1, max_length=100)
+    name: str
     email: EmailStr
     created_at: datetime
     updated_at: datetime

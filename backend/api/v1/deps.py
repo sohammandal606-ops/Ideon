@@ -18,6 +18,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.supabase_client import supabase_client
 from db.connection import get_database_session
+from services.user_service import UserService, get_user_service
 
 # Extracts the "Bearer <token>" header from incoming requests automatically.
 security = HTTPBearer(auto_error=True)
@@ -62,6 +63,20 @@ async def get_current_user(
         # already logged it, so the user just sees a clean 401 error.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
+
+
+async def get_current_db_user(
+    current_user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_database_session),
+    user_service: UserService = Depends(get_user_service),
+):
+    """Return the internal database User for the authenticated user.
+
+    Creates the profile automatically on first login.
+    """
+    return await user_service.get_or_create_profile(
+        session, current_user["sub"], current_user["email"]
+    )
+

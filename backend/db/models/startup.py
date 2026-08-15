@@ -36,10 +36,10 @@ class Startup(SQLModel, table=True):
 
     # Automatically set timestamps
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )

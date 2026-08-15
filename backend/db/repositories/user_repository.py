@@ -10,9 +10,10 @@ Used by:    services.user_service (called by UserService)
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlmodel import select
+from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from db.models.startup import Startup
 from db.models.user import User
 
 
@@ -46,7 +47,7 @@ class UserRepository:
         if user is None:
             return None
         user.name = name
-        user.updated_at = datetime.now(UTC)
+        user.updated_at = datetime.now(UTC).replace(tzinfo=None)
         session.add(user)
         await session.commit()
         await session.refresh(user)
@@ -58,10 +59,19 @@ class UserRepository:
         user = await self.get_by_auth_user_id(session, auth_user_id)
         if user is None:
             return None
-        # Startup, AnalysisRun, and Artifact models will be added in later
+            
+        statement = (
+            select(func.count())
+            .select_from(Startup)
+            .where(Startup.user_id == user.id)
+        )
+        result = await session.exec(statement)
+        total_startups = result.first() or 0
+        
+        # AnalysisRun and Artifact models will be added in later
         # phases. Stats queries will be expanded once those tables exist.
         return {
-            "total_startups": 0,
+            "total_startups": total_startups,
             "completed_analysis": 0,
             "reports_generated": 0,
             "pitch_decks_generated": 0,

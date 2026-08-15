@@ -22,10 +22,10 @@ class User(SQLModel, table=True):
     name: str = Field(max_length=100)
     email: str = Field(max_length=255)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None),
         nullable=False,
     )
