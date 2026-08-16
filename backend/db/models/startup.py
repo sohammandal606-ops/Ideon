@@ -30,9 +30,9 @@ class Startup(SQLModel, table=True):
     description: str
 
     # Optional fields that the user might not know yet
-    problem: str | None = Field(default=None)
-    solution: str | None = Field(default=None)
+    industry: str | None = Field(default=None)
     target_market: str | None = Field(default=None)
+    additional_info: str | None = Field(default=None)
 
     # Automatically set timestamps
     created_at: datetime = Field(

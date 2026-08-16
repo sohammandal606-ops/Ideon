@@ -16,9 +16,9 @@ class StartupCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=10)
-    problem: str | None = None
-    solution: str | None = None
+    industry: str | None = None
     target_market: str | None = None
+    additional_info: str | None = None
 
 
 class StartupUpdate(BaseModel):
@@ -27,9 +27,9 @@ class StartupUpdate(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, min_length=10)
-    problem: str | None = None
-    solution: str | None = None
+    industry: str | None = None
     target_market: str | None = None
+    additional_info: str | None = None
 
 
 class StartupResponse(BaseModel):
@@ -40,8 +40,8 @@ class StartupResponse(BaseModel):
     user_id: UUID
     name: str
     description: str
-    problem: str | None
-    solution: str | None
+    industry: str | None
     target_market: str | None
+    additional_info: str | None
     created_at: datetime
     updated_at: datetime
