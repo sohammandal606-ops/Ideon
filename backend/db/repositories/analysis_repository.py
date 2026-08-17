@@ -16,6 +16,7 @@ class AnalysisRepository:
         self,
         session: AsyncSession,
         startup_id: UUID,
+        inputs_snapshot: dict[str, Any],
     ) -> AnalysisRun:
         """
         Create a new analysis run.
@@ -25,6 +26,7 @@ class AnalysisRepository:
 
         analysis = AnalysisRun(
             startup_id=startup_id,
+            inputs_snapshot=inputs_snapshot,
             status=AnalysisStatus.PENDING,
             current_agent=None,
             progress_percentage=0,
@@ -66,12 +68,8 @@ class AnalysisRepository:
 
         statement = (
             select(AnalysisRun)
-            .where(
-                AnalysisRun.startup_id == startup_id
-            )
-            .order_by(
-                AnalysisRun.created_at.desc()
-            )
+            .where(AnalysisRun.startup_id == startup_id)
+            .order_by(AnalysisRun.created_at.desc())
             .limit(1)
         )
 
@@ -103,9 +101,7 @@ class AnalysisRepository:
                     ]
                 ),
             )
-            .order_by(
-                AnalysisRun.created_at.desc()
-            )
+            .order_by(AnalysisRun.created_at.desc())
             .limit(1)
         )
 
@@ -132,9 +128,7 @@ class AnalysisRepository:
             min(progress_percentage, 100),
         )
 
-        analysis.updated_at = datetime.now(
-            UTC
-        ).replace(tzinfo=None)
+        analysis.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
         session.add(analysis)
 
@@ -164,13 +158,9 @@ class AnalysisRepository:
         )
 
         if analysis.started_at is None:
-            analysis.started_at = datetime.now(
-                UTC
-            ).replace(tzinfo=None)
+            analysis.started_at = datetime.now(UTC).replace(tzinfo=None)
 
-        analysis.updated_at = datetime.now(
-            UTC
-        ).replace(tzinfo=None)
+        analysis.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
         session.add(analysis)
 
@@ -196,19 +186,13 @@ class AnalysisRepository:
 
         analysis.progress_percentage = 100
 
-        analysis.final_state_snapshot = (
-            final_state_snapshot
-        )
+        analysis.final_state_snapshot = final_state_snapshot
 
         analysis.error_message = None
 
-        analysis.completed_at = datetime.now(
-            UTC
-        ).replace(tzinfo=None)
+        analysis.completed_at = datetime.now(UTC).replace(tzinfo=None)
 
-        analysis.updated_at = datetime.now(
-            UTC
-        ).replace(tzinfo=None)
+        analysis.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
         session.add(analysis)
 
@@ -232,9 +216,7 @@ class AnalysisRepository:
 
         analysis.error_message = error_message
 
-        analysis.updated_at = datetime.now(
-            UTC
-        ).replace(tzinfo=None)
+        analysis.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
         session.add(analysis)
 
@@ -259,9 +241,7 @@ class AnalysisRepository:
 
         analysis.final_state_snapshot = state_snapshot
 
-        analysis.updated_at = datetime.now(
-            UTC
-        ).replace(tzinfo=None)
+        analysis.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
         session.add(analysis)
 

@@ -34,13 +34,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from db.models.analysis import AnalysisRun
 from db.repositories.analysis_repository import AnalysisRepository
 from db.repositories.startup_repository import StartupRepository
-
 from schemas.analysis import (
-    AnalysisRunResponse,
     AnalysisStatus,
 )
-
-# kushari when you work on state for langgraph please check it....
 from workflows.workflow import startup_workflow
 
 
@@ -71,7 +67,7 @@ class AnalysisService:
         self.analysis_repository = analysis_repository
         self.startup_repository = startup_repository
 
-  # start analysis
+    # --- Start Analysis ---
 
     async def start_analysis(
         self,
@@ -86,7 +82,7 @@ class AnalysisService:
         The startup must belong to the authenticated user.
         """
 
-       # verify the ownership...
+        # Verify ownership
 
         startup = await self.startup_repository.get_by_id(
             session,
@@ -94,17 +90,13 @@ class AnalysisService:
         )
 
         if not startup or startup.user_id != user_id:
-            raise StartupNotFoundError(
-                "Startup not found"
-            )
+            raise StartupNotFoundError("Startup not found")
 
-        # check the analysis is already running or not...
+        # Check if an analysis is already running
 
-        running_analysis = (
-            await self.analysis_repository.get_running(
-                session,
-                startup_id,
-            )
+        running_analysis = await self.analysis_repository.get_running(
+            session,
+            startup_id,
         )
 
         if running_analysis:
@@ -112,19 +104,16 @@ class AnalysisService:
                 "An analysis is already running for this startup"
             )
 
-       # check the previous analysis...
+        # Check the previous analysis
 
-        latest_analysis = (
-            await self.analysis_repository.get_latest(
-                session,
-                startup_id,
-            )
+        latest_analysis = await self.analysis_repository.get_latest(
+            session,
+            startup_id,
         )
 
         if (
             latest_analysis
-            and latest_analysis.status
-            == AnalysisStatus.COMPLETED
+            and latest_analysis.status == AnalysisStatus.COMPLETED
             and not force_re_run
         ):
             raise AnalysisAlreadyExistsError(
@@ -132,23 +121,31 @@ class AnalysisService:
                 "Use force_re_run=true to run the analysis again."
             )
 
-        # create a new analysisi for running...
+        # Create a new analysis run
+
+        inputs_snapshot = {
+            "name": startup.name,
+            "description": startup.description,
+            "industry": startup.industry,
+            "target_market": startup.target_market,
+            "additional_info": startup.additional_info,
+        }
 
         analysis = await self.analysis_repository.create(
             session=session,
             startup_id=startup_id,
+            inputs_snapshot=inputs_snapshot,
         )
 
-        # Buildin initial langgraph states...
+        # Build initial LangGraph state
 
         initial_state = {
             "startup_id": str(startup.id),
             "startup_name": startup.name,
-            "idea": startup.idea,
-            "problem": startup.problem,
-            "solution": startup.solution,
+            "description": startup.description,
+            "industry": startup.industry,
             "target_market": startup.target_market,
-
+            "additional_info": startup.additional_info,
             # Agent outputs
             "idea_validation": None,
             "market_research": None,
@@ -158,25 +155,21 @@ class AnalysisService:
             "mvp_plan": None,
             "gtm_strategy": None,
             "final_verdict": None,
-
             # Workflow tracking
             "current_agent": None,
             "progress_percentage": 0,
         }
-# Execute the langgraph workflow.....
+        # Execute the LangGraph workflow
 
         try:
-
             await self.analysis_repository.mark_in_progress(
                 session=session,
                 analysis_id=analysis.id,
             )
 
-            final_state = await self._run_workflow(
-                initial_state
-            )
+            final_state = await self._run_workflow(initial_state)
 
-            # save the work final flow ...
+            # Save the final workflow state
 
             await self.analysis_repository.mark_completed(
                 session=session,
@@ -185,8 +178,7 @@ class AnalysisService:
             )
 
         except Exception as exc:
-
-            # save the failure info...
+            # Save failure info
 
             await self.analysis_repository.mark_failed(
                 session=session,
@@ -196,19 +188,15 @@ class AnalysisService:
 
             raise
 
-        # return the updated analysisi...
+        # Return the updated analysis
 
-        updated_analysis = (
-            await self.analysis_repository.get_by_id(
-                session,
-                analysis.id,
-            )
+        updated_analysis = await self.analysis_repository.get_by_id(
+            session,
+            analysis.id,
         )
 
         if not updated_analysis:
-            raise AnalysisNotFoundError(
-                "Analysis run not found after creation"
-            )
+            raise AnalysisNotFoundError("Analysis run not found after creation")
 
         return updated_analysis
 
@@ -251,9 +239,7 @@ class AnalysisService:
         # If your workflow is asynchronous:
         # use ainvoke().
 
-        final_state = await startup_workflow.ainvoke(
-            initial_state
-        )
+        final_state = await startup_workflow.ainvoke(initial_state)
 
         return final_state
 
@@ -269,7 +255,7 @@ class AnalysisService:
         Get the latest analysis for a startup.
         """
 
-        #verify the the startup ownership...
+        # verify the the startup ownership...
 
         startup = await self.startup_repository.get_by_id(
             session,
@@ -277,27 +263,21 @@ class AnalysisService:
         )
 
         if not startup or startup.user_id != user_id:
-            raise StartupNotFoundError(
-                "Startup not found"
-            )
+            raise StartupNotFoundError("Startup not found")
 
         # get the latest analysisi...
 
-        analysis = (
-            await self.analysis_repository.get_latest(
-                session,
-                startup_id,
-            )
+        analysis = await self.analysis_repository.get_latest(
+            session,
+            startup_id,
         )
 
         if not analysis:
-            raise AnalysisNotFoundError(
-                "No analysis found for this startup"
-            )
+            raise AnalysisNotFoundError("No analysis found for this startup")
 
         return analysis
 
-    #get specific analysis run....
+    # get specific analysis run....
 
     async def get_analysis_run(
         self,
@@ -322,33 +302,25 @@ class AnalysisService:
         )
 
         if not startup or startup.user_id != user_id:
-            raise StartupNotFoundError(
-                "Startup not found"
-            )
+            raise StartupNotFoundError("Startup not found")
 
         # get analysis...
 
-        analysis = (
-            await self.analysis_repository.get_by_id(
-                session,
-                run_id,
-            )
+        analysis = await self.analysis_repository.get_by_id(
+            session,
+            run_id,
         )
 
         # -verify the analysis it belong to the startup or not...
 
-        if (
-            not analysis
-            or analysis.startup_id != startup_id
-        ):
-            raise AnalysisNotFoundError(
-                "Analysis run not found"
-            )
+        if not analysis or analysis.startup_id != startup_id:
+            raise AnalysisNotFoundError("Analysis run not found")
 
         return analysis
 
 
 # Dependencies....
+
 
 def get_analysis_service() -> AnalysisService:
     """

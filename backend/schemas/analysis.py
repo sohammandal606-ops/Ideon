@@ -1,14 +1,12 @@
-
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-
-class AnalysisStatus(str, Enum):
+class AnalysisStatus(StrEnum):
     """
     Current status of an analysis workflow.
     """
@@ -19,9 +17,7 @@ class AnalysisStatus(str, Enum):
     FAILED = "FAILED"
 
 
-
-
-class AnalysisAgent(str, Enum):
+class AnalysisAgent(StrEnum):
     """
     Agents participating in the IDEON analysis workflow.
     """
@@ -36,27 +32,18 @@ class AnalysisAgent(str, Enum):
     VERDICT = "verdict"
 
 
-
-
 class AnalysisRunCreate(BaseModel):
     """
     Request body used when the user clicks
     'Analyze Startup'.
     """
 
-    model_config = ConfigDict(
-        extra="forbid"
-    )
+    model_config = ConfigDict(extra="forbid")
 
     force_re_run: bool = Field(
         default=False,
-        description=(
-            "Force a new analysis even if a previous "
-            "analysis exists."
-        ),
+        description=("Force a new analysis even if a previous analysis exists."),
     )
-
-
 
 
 class AnalysisRunResponse(BaseModel):
@@ -64,9 +51,7 @@ class AnalysisRunResponse(BaseModel):
     Response returned to the frontend for an analysis run.
     """
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
 
@@ -81,11 +66,14 @@ class AnalysisRunResponse(BaseModel):
     progress_percentage: int = Field(
         default=0,
         ge=0,
-        le=10,
+        le=100,
     )
 
     # Error information if workflow fails
     error_message: str | None = None
+
+    # Snapshot of the startup inputs when this analysis started
+    inputs_snapshot: dict[str, Any] | None = None
 
     # Complete LangGraph state after completion
     final_state_snapshot: dict[str, Any] | None = None

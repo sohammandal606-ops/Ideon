@@ -16,7 +16,7 @@ class SignupRequest(BaseModel):
     # the request is rejected because "age" is not a defined field.
     model_config = ConfigDict(extra="forbid")
 
-    email: EmailStr                              # must be a valid email format
+    email: EmailStr  # must be a valid email format
     password: str = Field(min_length=8, max_length=128)  # at least 8 characters
 
 

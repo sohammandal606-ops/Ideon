@@ -30,7 +30,7 @@ class UserService:
         profile = await self.repository.get_by_auth_user_id(session, auth_user_id)
         if profile is not None:
             return profile
-            
+
         # If it doesn't exist, this is their first time logging in,
         # so we create a new profile for them automatically.
         return await self.repository.create_profile(session, auth_user_id, email)

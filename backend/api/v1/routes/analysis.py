@@ -3,13 +3,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 
-from api.v1.deps import get_current_user
+from api.v1.deps import DatabaseSession, get_current_user
 from schemas.analysis import (
     AnalysisRunCreate,
     AnalysisRunResponse,
 )
-from services.analysis_service import AnalysisService
-
+from services.analysis_service import AnalysisService, get_analysis_service
 
 router = APIRouter(
     prefix="/api/v1/startups",
@@ -17,19 +16,25 @@ router = APIRouter(
 )
 
 
-#start analysis...
+# --- Start Analysis ---
+
 
 @router.post(
     "/{startup_id}/analysis",
     response_model=AnalysisRunResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
-def start_analysis(
+async def start_analysis(
     startup_id: UUID,
     analysis_data: AnalysisRunCreate,
+    session: DatabaseSession,
     current_user: Annotated[
         dict,
         Depends(get_current_user),
+    ],
+    analysis_service: Annotated[
+        AnalysisService,
+        Depends(get_analysis_service),
     ],
 ) -> AnalysisRunResponse:
     """
@@ -48,25 +53,32 @@ def start_analysis(
         Start LangGraph
     """
 
-    return AnalysisService.start_analysis(
+    return await analysis_service.start_analysis(
+        session=session,
         startup_id=startup_id,
-        user_id=current_user["user_id"],
+        user_id=UUID(current_user["sub"]),
         force_re_run=analysis_data.force_re_run,
     )
 
 
-#get latest analysis...
+# --- Get Latest Analysis ---
+
 
 @router.get(
     "/{startup_id}/analysis",
     response_model=AnalysisRunResponse,
     status_code=status.HTTP_200_OK,
 )
-def get_latest_analysis(
+async def get_latest_analysis(
     startup_id: UUID,
+    session: DatabaseSession,
     current_user: Annotated[
         dict,
         Depends(get_current_user),
+    ],
+    analysis_service: Annotated[
+        AnalysisService,
+        Depends(get_analysis_service),
     ],
 ) -> AnalysisRunResponse:
     """
@@ -78,25 +90,32 @@ def get_latest_analysis(
         - Display final results
     """
 
-    return AnalysisService.get_latest_analysis(
+    return await analysis_service.get_latest_analysis(
+        session=session,
         startup_id=startup_id,
-        user_id=current_user["user_id"],
+        user_id=UUID(current_user["sub"]),
     )
 
 
-#get specific analysis...
+# --- Get Specific Analysis Run ---
+
 
 @router.get(
     "/{startup_id}/analysis/{run_id}",
     response_model=AnalysisRunResponse,
     status_code=status.HTTP_200_OK,
 )
-def get_analysis_run(
+async def get_analysis_run(
     startup_id: UUID,
     run_id: UUID,
+    session: DatabaseSession,
     current_user: Annotated[
         dict,
         Depends(get_current_user),
+    ],
+    analysis_service: Annotated[
+        AnalysisService,
+        Depends(get_analysis_service),
     ],
 ) -> AnalysisRunResponse:
     """
@@ -108,8 +127,9 @@ def get_analysis_run(
         - Retrieving final analysis
     """
 
-    return AnalysisService.get_analysis_run(
+    return await analysis_service.get_analysis_run(
+        session=session,
         startup_id=startup_id,
         run_id=run_id,
-        user_id=current_user["user_id"],
+        user_id=UUID(current_user["sub"]),
     )

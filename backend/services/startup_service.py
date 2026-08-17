@@ -70,4 +70,3 @@ class StartupService:
 
 def get_startup_service() -> StartupService:
     return StartupService(StartupRepository())
-
