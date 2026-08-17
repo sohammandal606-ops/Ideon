@@ -43,8 +43,8 @@ class StartupResponse(BaseModel):
     user_id: UUID
     name: str
     description: str
-    industry: str | None
-    target_market: str | None
-    additional_info: str | None
+    industry: str | None = None
+    target_market: str | None = None
+    additional_info: str | None = None
     created_at: datetime
     updated_at: datetime
