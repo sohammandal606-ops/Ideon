@@ -24,9 +24,7 @@ class UserRepository:
         self, session: AsyncSession, auth_user_id: str
     ) -> User | None:
         # Build a SQL query: SELECT * FROM users WHERE auth_user_id = '...'
-        statement = select(User).where(
-            User.auth_user_id == UUID(auth_user_id)
-        )
+        statement = select(User).where(User.auth_user_id == UUID(auth_user_id))
         result = await session.exec(statement)
         return result.first()  # returns the User or None if not found
 
@@ -35,9 +33,11 @@ class UserRepository:
     ) -> User:
         name = email.split("@", maxsplit=1)[0] or "Founder"
         user = User(auth_user_id=UUID(auth_user_id), email=email, name=name)
-        session.add(user)           # stage the new row for insertion
-        await session.commit()      # write it to the database
-        await session.refresh(user) # reload to get DB-generated fields (id, timestamps)
+        session.add(user)  # stage the new row for insertion
+        await session.commit()  # write it to the database
+        await session.refresh(
+            user
+        )  # reload to get DB-generated fields (id, timestamps)
         return user
 
     async def update_name(
@@ -59,15 +59,13 @@ class UserRepository:
         user = await self.get_by_auth_user_id(session, auth_user_id)
         if user is None:
             return None
-            
+
         statement = (
-            select(func.count())
-            .select_from(Startup)
-            .where(Startup.user_id == user.id)
+            select(func.count()).select_from(Startup).where(Startup.user_id == user.id)
         )
         result = await session.exec(statement)
         total_startups = result.first() or 0
-        
+
         # AnalysisRun and Artifact models will be added in later
         # phases. Stats queries will be expanded once those tables exist.
         return {

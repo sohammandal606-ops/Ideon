@@ -14,4 +14,3 @@ from core.config import settings
 supabase_client: Client = create_client(
     str(settings.SUPABASE_URL), settings.SUPABASE_SECRET_KEY.get_secret_value()
 )
-

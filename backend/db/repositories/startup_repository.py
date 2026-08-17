@@ -16,9 +16,7 @@ from db.models.startup import Startup
 class StartupRepository:
     """Handles CRUD operations for Startups."""
 
-    async def create(
-        self, session: AsyncSession, user_id: UUID, data: dict
-    ) -> Startup:
+    async def create(self, session: AsyncSession, user_id: UUID, data: dict) -> Startup:
         # Create a new Startup model from the validated data dict
         startup = Startup(user_id=user_id, **data)
         session.add(startup)
@@ -56,4 +54,3 @@ class StartupRepository:
     async def delete(self, session: AsyncSession, startup: Startup) -> None:
         await session.delete(startup)
         await session.commit()
-

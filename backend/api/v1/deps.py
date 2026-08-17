@@ -79,4 +79,3 @@ async def get_current_db_user(
     return await user_service.get_or_create_profile(
         session, current_user["sub"], current_user["email"]
     )
-

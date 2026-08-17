@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class StartupCreate(BaseModel):
     """Data required to create a new startup idea."""
+
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(min_length=1, max_length=100)
@@ -23,6 +24,7 @@ class StartupCreate(BaseModel):
 
 class StartupUpdate(BaseModel):
     """Data used to update an existing startup. All fields are optional."""
+
     model_config = ConfigDict(extra="forbid")
 
     name: str | None = Field(None, min_length=1, max_length=100)
@@ -34,6 +36,7 @@ class StartupUpdate(BaseModel):
 
 class StartupResponse(BaseModel):
     """Data returned to the frontend when reading a startup."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

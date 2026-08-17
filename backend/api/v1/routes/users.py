@@ -39,9 +39,9 @@ async def get_current_user_profile(
         # logger.exception automatically includes the full error stack trace
         # in the server logs so we can debug what actually went wrong.
         logger.exception("Unable to retrieve profile for authenticated user")
-        
+
         # We raise an HTTP error to tell the frontend something went wrong.
-        # "from None" hides the original internal error stack trace from 
+        # "from None" hides the original internal error stack trace from
         # the client response, keeping our internals secure and clean.
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

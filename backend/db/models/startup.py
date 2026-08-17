@@ -15,13 +15,13 @@ from sqlmodel import Field, SQLModel
 
 class Startup(SQLModel, table=True):
     """Database model for a Startup."""
-    
+
     # We specify the table name explicitly to keep it plural
     __tablename__ = "startups"
 
     # Primary key, automatically generated using uuid4
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    
+
     # Foreign key linking this startup to the user who created it
     user_id: UUID = Field(foreign_key="users.id", index=True)
 

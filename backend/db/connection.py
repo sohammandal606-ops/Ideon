@@ -23,11 +23,11 @@ from core.config import settings
 # so we don't create a new connection for every single request.
 engine = create_async_engine(
     settings.DATABASE_URL,
-    pool_size=4,        # keep 4 connections open at all times
-    max_overflow=2,     # allow 2 extra connections during traffic spikes
-    pool_timeout=30,    # wait up to 30s for a free connection
+    pool_size=4,  # keep 4 connections open at all times
+    max_overflow=2,  # allow 2 extra connections during traffic spikes
+    pool_timeout=30,  # wait up to 30s for a free connection
     pool_recycle=1800,  # replace connections older than 30 minutes
-    pool_pre_ping=True, # test each connection before using it
+    pool_pre_ping=True,  # test each connection before using it
 )
 
 # Session factory: creates a new database session (like a transaction window)

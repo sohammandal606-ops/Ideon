@@ -132,9 +132,10 @@ def test_list_startups_unauthorized(client):
 
 
 def test_create_startup_unauthorized(client):
-    response = client.post("/api/v1/startups", json={
-        "name": "X", "description": "A long enough description"
-    })
+    response = client.post(
+        "/api/v1/startups",
+        json={"name": "X", "description": "A long enough description"},
+    )
 
     assert response.status_code == 401
 
@@ -145,10 +146,13 @@ def test_create_startup_unauthorized(client):
 def test_create_startup_success(client):
     authenticate()
 
-    response = client.post("/api/v1/startups", json={
-        "name": "My Startup",
-        "description": "A revolutionary platform for founders",
-    })
+    response = client.post(
+        "/api/v1/startups",
+        json={
+            "name": "My Startup",
+            "description": "A revolutionary platform for founders",
+        },
+    )
 
     assert response.status_code == 201
     data = response.json()
@@ -160,13 +164,16 @@ def test_create_startup_success(client):
 def test_create_startup_with_optional_fields(client):
     authenticate()
 
-    response = client.post("/api/v1/startups", json={
-        "name": "My Startup",
-        "description": "A revolutionary platform for founders",
-        "problem": "Founders waste time on repetitive tasks",
-        "solution": "AI automation",
-        "target_market": "Early-stage founders",
-    })
+    response = client.post(
+        "/api/v1/startups",
+        json={
+            "name": "My Startup",
+            "description": "A revolutionary platform for founders",
+            "problem": "Founders waste time on repetitive tasks",
+            "solution": "AI automation",
+            "target_market": "Early-stage founders",
+        },
+    )
 
     assert response.status_code == 201
     data = response.json()
@@ -178,9 +185,12 @@ def test_create_startup_with_optional_fields(client):
 def test_create_startup_missing_name(client):
     authenticate()
 
-    response = client.post("/api/v1/startups", json={
-        "description": "A long enough description for validation",
-    })
+    response = client.post(
+        "/api/v1/startups",
+        json={
+            "description": "A long enough description for validation",
+        },
+    )
 
     assert response.status_code == 422
 
@@ -188,10 +198,13 @@ def test_create_startup_missing_name(client):
 def test_create_startup_description_too_short(client):
     authenticate()
 
-    response = client.post("/api/v1/startups", json={
-        "name": "X",
-        "description": "short",
-    })
+    response = client.post(
+        "/api/v1/startups",
+        json={
+            "name": "X",
+            "description": "short",
+        },
+    )
 
     assert response.status_code == 422
 
@@ -199,11 +212,14 @@ def test_create_startup_description_too_short(client):
 def test_create_startup_rejects_extra_fields(client):
     authenticate()
 
-    response = client.post("/api/v1/startups", json={
-        "name": "My Startup",
-        "description": "A long enough description for validation",
-        "revenue": 1000000,
-    })
+    response = client.post(
+        "/api/v1/startups",
+        json={
+            "name": "My Startup",
+            "description": "A long enough description for validation",
+            "revenue": 1000000,
+        },
+    )
 
     assert response.status_code == 422
 
@@ -251,25 +267,30 @@ def test_get_startup_not_found(client):
 def test_update_startup_success(client):
     authenticate()
 
-    response = client.patch(f"/api/v1/startups/{STARTUP_ID}", json={
-        "name": "Acme AI v2",
-    })
+    response = client.patch(
+        f"/api/v1/startups/{STARTUP_ID}",
+        json={
+            "name": "Acme AI v2",
+        },
+    )
 
     assert response.status_code == 200
     assert response.json()["name"] == "Acme AI v2"
     # Description should remain unchanged since we only updated the name
     assert (
-        response.json()["description"]
-        == "An AI-powered solution for small businesses"
+        response.json()["description"] == "An AI-powered solution for small businesses"
     )
 
 
 def test_update_startup_not_found(client):
     authenticate()
 
-    response = client.patch(f"/api/v1/startups/{MISSING_ID}", json={
-        "name": "Ghost",
-    })
+    response = client.patch(
+        f"/api/v1/startups/{MISSING_ID}",
+        json={
+            "name": "Ghost",
+        },
+    )
 
     assert response.status_code == 404
 
@@ -277,9 +298,12 @@ def test_update_startup_not_found(client):
 def test_update_startup_rejects_extra_fields(client):
     authenticate()
 
-    response = client.patch(f"/api/v1/startups/{STARTUP_ID}", json={
-        "revenue": 5000,
-    })
+    response = client.patch(
+        f"/api/v1/startups/{STARTUP_ID}",
+        json={
+            "revenue": 5000,
+        },
+    )
 
     assert response.status_code == 422
 
