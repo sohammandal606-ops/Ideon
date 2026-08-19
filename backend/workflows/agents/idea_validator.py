@@ -64,3 +64,5 @@ async def idea_validator_node(state: StartupState) -> dict:
         "progress_percentage": 20,
         "idea_validation": result.model_dump(),
     }
+    
+
