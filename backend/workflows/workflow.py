@@ -1,10 +1,17 @@
 from langgraph.graph import END, StateGraph
 
-from workflows.agents.idea_validator import idea_validator_node
+from workflows.agents import (
+    business_model_node,
+    competitor_analysis_node,
+    final_verdict_node,
+    financial_analysis_node,
+    gtm_strategy_node,
+    idea_validator_node,
+    market_research_node,
+    mvp_plan_node,
+)
 from workflows.state import StartupState
-from workflows.agents.market_research import market_research_node
-from workflows.agents.compititor_analysis import competitor_analysis_node
-from workflows.agents.business_model import business_model_node
+
 
 def create_workflow():
     """
@@ -13,52 +20,30 @@ def create_workflow():
     workflow = StateGraph(StartupState)
 
     # Add nodes
-    workflow.add_node(
-        "idea_validator", 
-         idea_validator_node
-         )
-    
-    workflow.add_node(
-       "market_research",
-       idea_validator_node,
-   )
-    workflow.add_node(
-            "market_research",
-            market_research_node,
-        )
-    workflow.add_node(
-        "competitor_analysis",
-        competitor_analysis_node,
-    )
-    workflow.add_node(
-        "business_model",
-        business_model_node,
-    )
+    workflow.add_node("idea_validator", idea_validator_node)
+    workflow.add_node("market_research", market_research_node)
+    workflow.add_node("competitor_analysis", competitor_analysis_node)
+    workflow.add_node("business_model", business_model_node)
+    workflow.add_node("financial_analysis", financial_analysis_node)
+    workflow.add_node("mvp_plan", mvp_plan_node)
+    workflow.add_node("gtm_strategy", gtm_strategy_node)
+    workflow.add_node("final_verdict", final_verdict_node)
+
+    # Define execution order (Edges)
     workflow.set_entry_point("idea_validator")
-#paralle execution..
 
-    workflow.add_edge(
-    "idea_validator",
-    "market_research",
-    )
-    
-    workflow.add_edge(
-        "idea_validator",
-        "competitor_analysis",
-    )
-    workflow.add_edge(
-        "market_research",
-        "business_model",
-    )
+    workflow.add_edge("idea_validator", "market_research")
+    workflow.add_edge("idea_validator", "competitor analysis")
+    workflow.add_edge("market_research", "business_model")
+    workflow.add_edge("competitor_analysis", "business_model")
+    workflow.add_edge("business_model", "financial_analysis")
+    workflow.add_edge("financial_analysis", "mvp_plan")
+    workflow.add_edge("mvp_plan", "gtm_strategy")
+    workflow.add_edge("gtm_strategy", "final_verdict")
 
-    workflow.add_edge(
-        "competitor_analysis",
-        "business_model",
-    )
-    workflow.add_edge(
-        "business_model",
-        END,
-    )
+    # End the workflow after final verdict
+    workflow.add_edge("final_verdict", END)
+
     return workflow.compile()
 
 
