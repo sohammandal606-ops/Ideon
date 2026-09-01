@@ -33,8 +33,7 @@ def create_workflow():
     workflow.set_entry_point("idea_validator")
 
     workflow.add_edge("idea_validator", "market_research")
-    workflow.add_edge("idea_validator", "competitor analysis")
-    workflow.add_edge("market_research", "business_model")
+    workflow.add_edge("market_research", "competitor_analysis")
     workflow.add_edge("competitor_analysis", "business_model")
     workflow.add_edge("business_model", "financial_analysis")
     workflow.add_edge("financial_analysis", "mvp_plan")

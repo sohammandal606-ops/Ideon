@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from services.llm_service import get_llm
 from workflows.state import StartupState
+from workflows.utils import run_research_agent
 
 
 class BusinessModelOutput(BaseModel):
@@ -22,16 +23,28 @@ class BusinessModelOutput(BaseModel):
 
 async def business_model_node(state: StartupState) -> dict:
     """
-    Generates a business model for the startup.
+    Generates a business model for the startup with enriched context and web search.
     """
     llm = get_llm()
+    
+    # 1. Live Web Research Phase
+    research_prompt = (
+        f"What are the standard pricing models and cost structures for startups in the {state.get('industry')} space? "
+        f"Looking for industry benchmarks for {state.get('description')}."
+    )
+    
+    try:
+        research_notes = await run_research_agent(research_prompt)
+    except Exception as e:
+        research_notes = f"Failed to search web: {e}"
 
     prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
                 "You are a seasoned entrepreneur and business strategist. "
-                "Design a viable and scalable business model for this startup.",
+                "Design a viable and scalable business model for this startup using all provided context. "
+                "CRITICAL: You must explicitly output a valid JSON containing ALL four fields: revenue_streams, pricing_strategy, cost_structure, and key_partners.",
             ),
             (
                 "user",
@@ -39,6 +52,7 @@ async def business_model_node(state: StartupState) -> dict:
                 "Description: {description}\n"
                 "Target Audience: {target_audience}\n"
                 "Competitive Advantage: {competitive_advantage}\n\n"
+                "Live Web Industry Benchmarks:\n{research_notes}\n\n"
                 "Please design a structured business model including revenue streams, pricing, and costs.",
             ),
         ]
@@ -61,6 +75,7 @@ async def business_model_node(state: StartupState) -> dict:
             "description": state.get("description"),
             "target_audience": target_audience,
             "competitive_advantage": competitive_advantage,
+            "research_notes": research_notes,
         }
     )
 

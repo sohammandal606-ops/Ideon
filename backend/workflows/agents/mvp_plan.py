@@ -22,7 +22,7 @@ class MvpPlanOutput(BaseModel):
 
 async def mvp_plan_node(state: StartupState) -> dict:
     """
-    Defines the Minimum Viable Product plan.
+    Defines the Minimum Viable Product plan with full business context.
     """
     llm = get_llm()
 
@@ -31,14 +31,17 @@ async def mvp_plan_node(state: StartupState) -> dict:
             (
                 "system",
                 "You are an expert CTO and product manager. "
-                "Design a lean and pragmatic MVP (Minimum Viable Product) for this startup.",
+                "Design a lean and pragmatic MVP (Minimum Viable Product) taking into account the business model and competitors. "
+                "CRITICAL: You must explicitly output a valid JSON containing ALL four fields: core_features, tech_stack_recommendation, development_timeline, and success_metrics.",
             ),
             (
                 "user",
                 "Startup Name: {startup_name}\n"
                 "Description: {description}\n"
-                "Target Audience: {target_audience}\n\n"
-                "Please provide a structured MVP plan including features, tech stack, and metrics.",
+                "Target Audience: {target_audience}\n"
+                "Competitive Advantage: {competitive_advantage}\n"
+                "Business Model: {business_model}\n\n"
+                "Please provide a structured MVP plan.",
             ),
         ]
     )
@@ -50,11 +53,23 @@ async def mvp_plan_node(state: StartupState) -> dict:
         audience = state["market_research"].get("target_audience", [])
         target_audience = ", ".join(audience) if audience else "None"
 
+    competitive_advantage = "None"
+    if state.get("competitor_analysis"):
+        competitive_advantage = state["competitor_analysis"].get("competitive_advantage", "None")
+        
+    business_model_context = "None"
+    if state.get("business_model"):
+        bm = state["business_model"]
+        revenue = ", ".join(bm.get("revenue_streams", []))
+        business_model_context = f"Revenue Strategy: {revenue}"
+
     result = await chain.ainvoke(
         {
             "startup_name": state.get("startup_name"),
             "description": state.get("description"),
             "target_audience": target_audience,
+            "competitive_advantage": competitive_advantage,
+            "business_model": business_model_context,
         }
     )
 

@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from services.llm_service import get_llm
 from workflows.state import StartupState
+from workflows.utils import run_research_agent
 
 
 class FinancialAnalysisOutput(BaseModel):
@@ -22,23 +23,37 @@ class FinancialAnalysisOutput(BaseModel):
 
 async def financial_analysis_node(state: StartupState) -> dict:
     """
-    Generates a high-level financial analysis for the startup.
+    Generates a high-level financial analysis using web data.
     """
     llm = get_llm()
+    
+    # 1. Live Web Research Phase
+    research_prompt = (
+        f"What are the typical startup costs and burn rates for a software startup in the {state.get('industry')} sector? "
+        f"Looking for benchmark data for {state.get('description')}."
+    )
+    
+    try:
+        research_notes = await run_research_agent(research_prompt)
+    except Exception as e:
+        research_notes = f"Failed to search web: {e}"
 
+    # 2. Data Extraction Phase
     prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
                 "You are a CFO and financial modeler for early-stage startups. "
-                "Provide realistic financial estimates and projections based on the business model.",
+                "Provide realistic financial estimates based on the business model and research notes. "
+                "CRITICAL: You must explicitly output a valid JSON containing ALL four fields: startup_costs, burn_rate_estimate, revenue_projections, and break_even_timeline.",
             ),
             (
                 "user",
                 "Startup Name: {startup_name}\n"
                 "Description: {description}\n"
                 "Business Model: {business_model}\n\n"
-                "Please provide a structured financial analysis with costs, burn rate, and projections.",
+                "Live Web Industry Financials:\n{research_notes}\n\n"
+                "Please provide a structured financial analysis.",
             ),
         ]
     )
@@ -57,6 +72,7 @@ async def financial_analysis_node(state: StartupState) -> dict:
             "startup_name": state.get("startup_name"),
             "description": state.get("description"),
             "business_model": business_model_context,
+            "research_notes": research_notes,
         }
     )
 
