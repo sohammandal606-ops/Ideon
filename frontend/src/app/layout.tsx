@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   description: "A structured workspace for founders. Turn your assumptions into data-backed plans, accelerating your journey from idea to execution.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#0a0a0a",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -24,9 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#fafafa]">
+      <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#fafafa] overflow-x-hidden">
         {children}
       </body>
     </html>
   );
 }
+

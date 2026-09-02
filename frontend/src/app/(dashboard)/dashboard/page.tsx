@@ -1,205 +1,183 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Plus, MoreHorizontal, Activity, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import {
+  Plus,
+  MoreHorizontal,
+  ArrowUpRight,
+  Clock,
+  Sparkles,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import { useProjectModal } from "@/context/project-modal-context";
 
-const startups = [
-  {
-    id: 1,
-    name: "Acme Corp Analytics",
-    description: "B2B SaaS platform for predictive churn analysis.",
-    status: "Validating",
-    lastEdited: "2 hours ago",
-    progress: 35,
-    accent: "violet",
-  },
-  {
-    id: 2,
-    name: "Fintech API",
-    description: "Open banking infrastructure for Latin America.",
-    status: "Building",
-    lastEdited: "1 day ago",
-    progress: 78,
-    accent: "emerald",
-  },
-  {
-    id: 3,
-    name: "EcoLogistics",
-    description: "Supply chain optimization for sustainable brands.",
-    status: "Draft",
-    lastEdited: "3 days ago",
-    progress: 12,
-    accent: "amber",
-  },
-];
-
-const accentStyles: Record<string, { bg: string; text: string; bar: string }> = {
+const accentStyles = {
   violet: {
-    bg: "bg-violet-500/10",
-    text: "text-violet-400",
-    bar: "from-violet-500 to-violet-400",
+    badge: "bg-violet-500/15 text-violet-300 border-violet-500/30",
+    bar: "from-violet-500 to-indigo-500",
+    avatarBg: "bg-violet-500/15 text-violet-300 border-violet-500/20",
+    dot: "bg-violet-400",
   },
   emerald: {
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-400",
-    bar: "from-emerald-500 to-emerald-400",
+    badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    bar: "from-emerald-500 to-teal-400",
+    avatarBg: "bg-emerald-500/15 text-emerald-300 border-emerald-500/20",
+    dot: "bg-emerald-400",
   },
   amber: {
-    bg: "bg-amber-500/10",
-    text: "text-amber-400",
-    bar: "from-amber-500 to-amber-400",
+    badge: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+    bar: "from-amber-500 to-orange-400",
+    avatarBg: "bg-amber-500/15 text-amber-300 border-amber-500/20",
+    dot: "bg-amber-400",
+  },
+  blue: {
+    badge: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+    bar: "from-blue-500 to-cyan-400",
+    avatarBg: "bg-blue-500/15 text-blue-300 border-blue-500/20",
+    dot: "bg-blue-400",
   },
 };
 
 export default function DashboardPage() {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring" as const,
-        stiffness: 100,
-        damping: 15,
-      },
-    },
-  };
+  const { startups, openModal } = useProjectModal();
 
   return (
-    <div className="flex flex-col gap-8 pb-10">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8 pb-12 select-none">
+      {/* 1. Header Overview Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
             Overview
           </h1>
-          <p className="text-[15px] text-zinc-500 mt-1">
-            Manage your startup projects and view recent activity.
+          <p className="text-[13.5px] sm:text-[14px] text-zinc-400 mt-1">
+            Manage your startup ventures, track agent progress, and view live workspace activity.
           </p>
         </div>
-        <Button className="h-9 px-4 rounded-lg bg-violet-600 text-white hover:bg-violet-500 shadow-[0_0_16px_-4px_rgba(139,92,246,0.4)] hover:shadow-[0_0_24px_-4px_rgba(139,92,246,0.6)] transition-all flex items-center gap-2 text-[14px] font-medium">
-          <Plus className="w-4 h-4" />
-          New Project
-        </Button>
+
+        <button
+          type="button"
+          onClick={openModal}
+          className="inline-flex items-center justify-center gap-2 px-4 sm:px-4.5 py-2.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-100 text-[13.5px] font-medium shadow-sm transition-all active:scale-[0.98] shrink-0 cursor-pointer w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4 text-zinc-950" />
+          <span>New Project</span>
+        </button>
       </div>
 
-      {/* Projects Grid */}
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-      >
-        {startups.map((startup) => {
-          const accent = accentStyles[startup.accent];
-          return (
-            <motion.div key={startup.id} variants={item}>
-              <Link href={`/projects/${startup.id}`} className="block h-full">
-                <div className="glass-surface-interactive p-5 flex flex-col h-full group cursor-pointer">
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className={`w-10 h-10 rounded-lg ${accent.bg} ${accent.text} flex items-center justify-center font-bold text-sm`}
-                    >
-                      {startup.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <button
-                      className="p-1.5 text-zinc-600 hover:text-zinc-300 rounded-md hover:bg-white/[0.06] transition-colors"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <h3 className="text-[16px] font-semibold text-white mb-1 tracking-tight">
-                    {startup.name}
-                  </h3>
-                  <p className="text-[14px] text-zinc-500 line-clamp-2 mb-6 flex-1">
-                    {startup.description}
-                  </p>
-
-                  <div className="mt-auto">
-                    <div className="flex items-center justify-between mb-2">
-                      <span
-                        className={`text-[13px] font-medium ${accent.text}`}
-                      >
-                        {startup.status}
-                      </span>
-                      <span className="text-[12px] text-zinc-600">
-                        {startup.progress}%
-                      </span>
-                    </div>
-                    {/* Gradient progress bar */}
-                    <div className="w-full h-1 bg-white/[0.04] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full bg-gradient-to-r ${accent.bar} rounded-full transition-all duration-1000 ease-out`}
-                        style={{ width: `${startup.progress}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between mt-4">
-                      <p className="text-[12px] text-zinc-600">
-                        Edited {startup.lastEdited}
-                      </p>
-                      <ArrowUpRight className="w-4 h-4 text-zinc-700 group-hover:text-zinc-400 transition-colors" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          );
-        })}
-
-        {/* Create New Card */}
-        <motion.div variants={item}>
-          <button className="w-full h-full min-h-[220px] rounded-2xl border border-dashed border-white/[0.08] hover:border-white/[0.15] bg-white/[0.01] hover:bg-white/[0.03] flex flex-col items-center justify-center gap-3 transition-all duration-300 group cursor-pointer">
-            <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/30 transition-all duration-300">
-              <Plus className="w-5 h-5 text-zinc-600 group-hover:text-violet-400 transition-colors" />
-            </div>
-            <span className="text-[15px] font-medium text-zinc-600 group-hover:text-zinc-400 transition-colors">
-              Create New Project
-            </span>
-          </button>
-        </motion.div>
-      </motion.div>
-
-      {/* Recent Activity */}
-      <div className="mt-4">
-        <h2 className="text-[16px] font-semibold tracking-tight text-white mb-4">
-          Recent Activity
-        </h2>
-        <div className="glass-surface p-1 divide-y divide-white/[0.04]">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex items-start gap-4 p-4 hover:bg-white/[0.02] transition-colors duration-200 rounded-xl cursor-pointer"
-            >
-              <div className="mt-0.5 w-8 h-8 rounded-full bg-white/[0.04] flex items-center justify-center">
-                <Activity className="w-4 h-4 text-zinc-600" />
-              </div>
-              <div>
-                <p className="text-[14px] text-white font-medium">
-                  Financial model updated automatically.
-                </p>
-                <p className="text-[13px] text-zinc-500 mt-0.5">
-                  Based on your new market size assumption for Acme Corp.
-                </p>
-                <p className="text-[12px] text-zinc-700 mt-2">
-                  {i * 2} hours ago
-                </p>
-              </div>
-            </div>
-          ))}
+      {/* 2. Projects Grid Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[17px] font-semibold text-white tracking-tight">
+            Active Projects
+          </h2>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-400 font-medium">Showing {startups.length} projects</span>
+          </div>
         </div>
-      </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+          {startups.map((startup, i) => {
+            const style = accentStyles[startup.accent] || accentStyles.violet;
+            return (
+              <motion.div
+                key={startup.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: i * 0.05 }}
+              >
+                <Link href={`/projects/${startup.id}`} className="block h-full group">
+                  <div className="h-full rounded-[22px] bg-[#141720] hover:bg-[#171b26] border border-white/[0.07] hover:border-white/[0.14] p-5.5 flex flex-col justify-between transition-all duration-200 shadow-lg hover:shadow-2xl relative overflow-hidden">
+                    {/* Top edge glow line */}
+                    <div
+                      className="absolute inset-x-0 top-0 h-px pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(255,255,255,0.2) 50%, transparent)",
+                      }}
+                    />
+
+                    {/* Top Row: Avatar & Status & Menu */}
+                    <div>
+                      <div className="flex items-start justify-between mb-4">
+                        <div
+                          className={`w-11 h-11 rounded-xl ${style.avatarBg} border flex items-center justify-center font-bold text-[14px] shadow-sm`}
+                        >
+                          {startup.name.substring(0, 2).toUpperCase()}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {startup.viabilityScore && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                              <Sparkles className="w-3 h-3 text-blue-400" />
+                              {startup.viabilityScore}/100
+                            </span>
+                          )}
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${style.badge}`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                            {startup.status}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            className="p-1 text-zinc-500 hover:text-zinc-200 rounded-lg hover:bg-white/[0.06] transition-colors"
+                            aria-label="More options"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Project Name & Description */}
+                      <h3 className="text-[17px] font-semibold text-white tracking-tight group-hover:text-blue-400 transition-colors leading-snug mb-2">
+                        {startup.name}
+                      </h3>
+                      <p className="text-[13.5px] text-zinc-400 line-clamp-2 leading-relaxed font-normal mb-6">
+                        {startup.description}
+                      </p>
+                    </div>
+
+                    {/* Bottom Progress & Metadata */}
+                    <div className="space-y-3 pt-3 border-t border-white/[0.04]">
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className="text-zinc-400 font-medium">
+                          Validation Completion
+                        </span>
+                        <span className="text-white font-semibold">
+                          {startup.progress}%
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-gradient-to-r ${style.bar} rounded-full transition-all duration-700 ease-out`}
+                          style={{ width: `${startup.progress}%` }}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 text-[11.5px] text-zinc-400">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          Edited {startup.lastEdited}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-zinc-400 group-hover:text-white transition-colors text-[11px]">
+                          <span>{startup.category}</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
