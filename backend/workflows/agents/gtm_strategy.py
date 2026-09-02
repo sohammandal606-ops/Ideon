@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from services.llm_service import get_llm
 from workflows.state import StartupState
+from workflows.utils import run_research_agent
 
 
 class GtmStrategyOutput(BaseModel):
@@ -22,16 +23,29 @@ class GtmStrategyOutput(BaseModel):
 
 async def gtm_strategy_node(state: StartupState) -> dict:
     """
-    Formulates a Go-To-Market strategy.
+    Formulates a Go-To-Market strategy using live web search.
     """
     llm = get_llm()
+    
+    # 1. Live Web Research Phase
+    research_prompt = (
+        f"What are the most effective modern marketing channels and typical Customer Acquisition Costs (CAC) "
+        f"for startups in the {state.get('industry')} sector targeting {state.get('target_market')}?"
+    )
+    
+    try:
+        research_notes = await run_research_agent(research_prompt)
+    except Exception as e:
+        research_notes = f"Failed to search web: {e}"
 
+    # 2. Data Extraction Phase
     prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
                 "You are a brilliant Growth Hacker and CMO. "
-                "Design a scrappy, effective Go-To-Market (GTM) strategy for a new startup.",
+                "Design a scrappy, effective Go-To-Market (GTM) strategy using the provided research. "
+                "CRITICAL: You must explicitly output a valid JSON containing ALL four fields: launch_channels, marketing_tactics, customer_acquisition_cost_estimate, and early_adopter_profile.",
             ),
             (
                 "user",
@@ -39,7 +53,8 @@ async def gtm_strategy_node(state: StartupState) -> dict:
                 "Description: {description}\n"
                 "MVP Features: {mvp_features}\n"
                 "Target Audience: {target_audience}\n\n"
-                "Please provide a structured GTM strategy for launch and early growth.",
+                "Live Web Marketing Trends:\n{research_notes}\n\n"
+                "Please provide a structured GTM strategy for launch.",
             ),
         ]
     )
@@ -62,6 +77,7 @@ async def gtm_strategy_node(state: StartupState) -> dict:
             "description": state.get("description"),
             "mvp_features": mvp_features,
             "target_audience": target_audience,
+            "research_notes": research_notes,
         }
     )
 

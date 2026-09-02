@@ -164,7 +164,7 @@ class AnalysisService:
         try:
             await self.analysis_repository.mark_in_progress(
                 session=session,
-                analysis_id=analysis.id,
+                analysis=analysis,
             )
 
             final_state = await self._run_workflow(initial_state)
@@ -173,7 +173,7 @@ class AnalysisService:
 
             await self.analysis_repository.mark_completed(
                 session=session,
-                analysis_id=analysis.id,
+                analysis=analysis,
                 final_state_snapshot=final_state,
             )
 
@@ -182,11 +182,9 @@ class AnalysisService:
 
             await self.analysis_repository.mark_failed(
                 session=session,
-                analysis_id=analysis.id,
+                analysis=analysis,
                 error_message=str(exc),
             )
-
-            raise
 
         # Return the updated analysis
 
