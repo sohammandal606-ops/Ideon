@@ -159,44 +159,41 @@ class AnalysisService:
             "current_agent": None,
             "progress_percentage": 0,
         }
-        # Execute the LangGraph workflow
+        # Execute the LangGraph workflow in the background
+        import asyncio
+        from db.connection import session_factory
 
-        try:
-            await self.analysis_repository.mark_in_progress(
-                session=session,
-                analysis=analysis,
-            )
+        async def _run_workflow_bg(analysis_id: UUID, init_state: dict):
+            async with session_factory() as bg_session:
+                bg_analysis = await self.analysis_repository.get_by_id(bg_session, analysis_id)
+                if not bg_analysis:
+                    return
 
-            final_state = await self._run_workflow(initial_state)
+                try:
+                    await self.analysis_repository.mark_in_progress(
+                        session=bg_session,
+                        analysis=bg_analysis,
+                    )
 
-            # Save the final workflow state
+                    final_state = await self._run_workflow(init_state)
 
-            await self.analysis_repository.mark_completed(
-                session=session,
-                analysis=analysis,
-                final_state_snapshot=final_state,
-            )
+                    await self.analysis_repository.mark_completed(
+                        session=bg_session,
+                        analysis=bg_analysis,
+                        final_state_snapshot=final_state,
+                    )
 
-        except Exception as exc:
-            # Save failure info
+                except Exception as exc:
+                    await self.analysis_repository.mark_failed(
+                        session=bg_session,
+                        analysis=bg_analysis,
+                        error_message=str(exc),
+                    )
 
-            await self.analysis_repository.mark_failed(
-                session=session,
-                analysis=analysis,
-                error_message=str(exc),
-            )
+        asyncio.create_task(_run_workflow_bg(analysis.id, initial_state))
 
-        # Return the updated analysis
-
-        updated_analysis = await self.analysis_repository.get_by_id(
-            session,
-            analysis.id,
-        )
-
-        if not updated_analysis:
-            raise AnalysisNotFoundError("Analysis run not found after creation")
-
-        return updated_analysis
+        # Return the created analysis (PENDING)
+        return analysis
 
     # langgraph workflow...
 

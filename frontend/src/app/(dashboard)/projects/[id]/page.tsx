@@ -47,8 +47,8 @@ import {
   useProjectModal,
   StartupProject,
   AgentWorkflowOutput,
-  generateMockAgentOutput,
 } from "@/context/project-modal-context";
+import { api } from "@/lib/api";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -178,44 +178,46 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [showSummaryMatrix, setShowSummaryMatrix] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
+  const [agentOutputs, setAgentOutputs] = useState<AgentWorkflowOutput | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    const fetchAnalysis = async () => {
+      try {
+        let res = null;
+        try {
+          res = await api.analysis.getLatest(projectId);
+        } catch (e: any) {
+          if (e.message?.includes("No analysis found") || e.message?.includes("404")) {
+            res = await api.analysis.start(projectId, { force_re_run: false });
+          } else {
+             throw e;
+          }
+        }
+
+        if (res && isMounted) {
+          if (res.status === "COMPLETED" && res.final_state_snapshot) {
+            setAgentOutputs(res.final_state_snapshot as AgentWorkflowOutput);
+          } else if (res.status === "PENDING" || res.status === "IN_PROGRESS") {
+            // Poll for updates
+            setTimeout(fetchAnalysis, 2000);
+          } else if (res.status === "FAILED") {
+            console.error("Analysis failed:", res.error_message);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching analysis", err);
+      }
+    };
+    
     const found = getStartup(projectId);
     if (found) {
-      if (!found.agentOutputs) {
-        found.agentOutputs = generateMockAgentOutput(
-          found.name,
-          found.description,
-          found.industry,
-          found.target_market,
-          found.additional_info
-        );
-      }
       setProject(found);
-    } else {
-      // Fallback if accessed via direct URL
-      const fallback: StartupProject = {
-        id: projectId,
-        name: "Autonomous Venture Engine",
-        description: "Intelligent autonomous startup validation & architecture pipeline.",
-        industry: "B2B SaaS",
-        target_market: "Global Tech Companies & Founders",
-        status: "Validating",
-        lastEdited: "Just now",
-        progress: 100,
-        category: "B2B SaaS",
-        accent: "violet",
-        viabilityScore: 89,
-        agentOutputs: generateMockAgentOutput(
-          "Autonomous Venture Engine",
-          "Intelligent autonomous startup validation & architecture pipeline.",
-          "B2B SaaS",
-          "Global Tech Companies & Founders"
-        ),
-      };
-      setProject(fallback);
     }
-  }, [projectId, startups, getStartup]);
+    
+    fetchAnalysis();
+    return () => { isMounted = false; };
+  }, [projectId, getStartup, startups]);
 
   const handleDownloadPDF = () => {
     setIsGeneratingPdf(true);
@@ -226,15 +228,15 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
   };
 
   const handleCopySummary = () => {
-    if (!project?.agentOutputs) return;
+    if (!agentOutputs) return;
     navigator.clipboard.writeText(
-      `Project: ${project.name}\nViability Score: ${project.agentOutputs.final_verdict.viabilityScore}/100\nVerdict: ${project.agentOutputs.final_verdict.executiveSummary}`
+      `Project: ${project?.name}\nViability Score: ${agentOutputs.final_verdict?.viabilityScore || "N/A"}/100\nVerdict: ${agentOutputs.final_verdict?.executiveSummary || "N/A"}`
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!project || !project.agentOutputs) {
+  if (!project || !agentOutputs) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[65vh] text-zinc-400 space-y-4">
         <div className="relative">
@@ -252,7 +254,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
     );
   }
 
-  const out = project.agentOutputs;
+  const out = agentOutputs;
   const currentAgent = AGENTS_CONFIG.find((a) => a.key === activeTab) || AGENTS_CONFIG[7];
   const CurrentIcon = currentAgent.icon;
 
