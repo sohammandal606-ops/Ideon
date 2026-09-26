@@ -1,7 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from services.llm_service import get_llm
+from core.config import settings
 from workflows.state import StartupState
 
 
@@ -24,7 +25,28 @@ async def idea_validator_node(state: StartupState) -> dict:
     """
     Analyzes the startup idea and validates its core assumptions.
     """
-    llm = get_llm()
+    api_key = (
+        settings.MISTRAL_API_KEY_IDEA_VALIDATOR.get_secret_value()
+        if settings.MISTRAL_API_KEY_IDEA_VALIDATOR
+        else (
+            settings.MISTRAL_API_KEY.get_secret_value()
+            if settings.MISTRAL_API_KEY
+            else None
+        )
+    )
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY_IDEA_VALIDATOR (or MISTRAL_API_KEY) is not configured."
+        )
+
+    llm = ChatMistralAI(
+        model=settings.MISTRAL_MODEL_IDEA_VALIDATOR or settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE_IDEA_VALIDATOR
+        if settings.MISTRAL_TEMPERATURE_IDEA_VALIDATOR is not None
+        else settings.MISTRAL_TEMPERATURE,
+        max_retries=3,
+        api_key=api_key,
+    )
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -64,5 +86,3 @@ async def idea_validator_node(state: StartupState) -> dict:
         "progress_percentage": 20,
         "idea_validation": result.model_dump(),
     }
-    
-

@@ -1,21 +1,6 @@
-"""Creates a ChatMistralAI instance using centralized settings.
+"""DEPRECATED: LLM service is no longer used.
 
-Depends on: core.config (MISTRAL_API_KEY, MISTRAL_MODEL, MISTRAL_TEMPERATURE)
-Used by:    agents, workflows (future)
+Each agent in workflows/agents/ now directly instantiates its own ChatMistralAI
+model using its own dedicated API key (e.g. MISTRAL_API_KEY_<AGENT_NAME>)
+configured in core.config.settings and .env.
 """
-
-from langchain_mistralai import ChatMistralAI
-
-from core.config import settings
-
-
-def get_llm() -> ChatMistralAI:
-    if settings.MISTRAL_API_KEY is None:
-        raise ValueError("MISTRAL_API_KEY is not configured.")
-
-    return ChatMistralAI(
-        model=settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE,
-        max_retries=3,
-        api_key=settings.MISTRAL_API_KEY.get_secret_value(),
-    )

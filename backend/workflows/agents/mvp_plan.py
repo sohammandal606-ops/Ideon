@@ -1,7 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from services.llm_service import get_llm
+from core.config import settings
 from workflows.state import StartupState
 
 
@@ -24,7 +25,28 @@ async def mvp_plan_node(state: StartupState) -> dict:
     """
     Defines the Minimum Viable Product plan with full business context.
     """
-    llm = get_llm()
+    api_key = (
+        settings.MISTRAL_API_KEY_MVP_PLAN.get_secret_value()
+        if settings.MISTRAL_API_KEY_MVP_PLAN
+        else (
+            settings.MISTRAL_API_KEY.get_secret_value()
+            if settings.MISTRAL_API_KEY
+            else None
+        )
+    )
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY_MVP_PLAN (or MISTRAL_API_KEY) is not configured."
+        )
+
+    llm = ChatMistralAI(
+        model=settings.MISTRAL_MODEL_MVP_PLAN or settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE_MVP_PLAN
+        if settings.MISTRAL_TEMPERATURE_MVP_PLAN is not None
+        else settings.MISTRAL_TEMPERATURE,
+        max_retries=3,
+        api_key=api_key,
+    )
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -55,8 +77,10 @@ async def mvp_plan_node(state: StartupState) -> dict:
 
     competitive_advantage = "None"
     if state.get("competitor_analysis"):
-        competitive_advantage = state["competitor_analysis"].get("competitive_advantage", "None")
-        
+        competitive_advantage = state["competitor_analysis"].get(
+            "competitive_advantage", "None"
+        )
+
     business_model_context = "None"
     if state.get("business_model"):
         bm = state["business_model"]
