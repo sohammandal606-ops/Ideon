@@ -169,16 +169,12 @@ def test_create_startup_with_optional_fields(client):
         json={
             "name": "My Startup",
             "description": "A revolutionary platform for founders",
-            "problem": "Founders waste time on repetitive tasks",
-            "solution": "AI automation",
             "target_market": "Early-stage founders",
         },
     )
 
     assert response.status_code == 201
     data = response.json()
-    assert data["problem"] == "Founders waste time on repetitive tasks"
-    assert data["solution"] == "AI automation"
     assert data["target_market"] == "Early-stage founders"
 
 

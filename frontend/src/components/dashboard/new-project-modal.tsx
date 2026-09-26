@@ -20,8 +20,8 @@ import {
 import {
   useProjectModal,
   StartupProject,
+  generateMockAgentOutput,
 } from "@/context/project-modal-context";
-import { api } from "@/lib/api";
 
 interface FormErrors {
   name?: string;
@@ -86,41 +86,50 @@ export function NewProjectModal() {
   };
 
   // Start AI Multi-Agent Analysis and redirect to dedicated page
-  const handleStartAnalysis = async (e: React.FormEvent) => {
+  const handleStartAnalysis = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    try {
-      // 1. Create the startup via the API
-      const newStartup = await api.startups.create({
-        name: name.trim(),
-        description: description.trim(),
-        industry: industry.trim() || undefined,
-        target_market: targetMarket.trim() || undefined,
-        additional_info: additionalInfo.trim() || undefined,
-      });
+    const accents: Array<"violet" | "emerald" | "amber" | "blue"> = [
+      "violet",
+      "emerald",
+      "amber",
+      "blue",
+    ];
+    const assignedAccent = accents[Math.floor(Math.random() * accents.length)];
+    const projectId = Date.now().toString();
 
-      // 2. Add it to our local state so the sidebar updates instantly
-      const mappedProject: StartupProject = {
-        ...newStartup,
-        category: newStartup.industry || "General",
-        accent: "violet",
-        progress: 100,
-        status: "Validating",
-        lastEdited: "just now",
-      };
-      addStartup(mappedProject);
-      closeModal();
+    const agentOutputs = generateMockAgentOutput(
+      name.trim(),
+      description.trim(),
+      industry.trim() || undefined,
+      targetMarket.trim() || undefined,
+      additionalInfo.trim() || undefined
+    );
 
-      // 3. Redirect to the dedicated analysis and PDF generation page
-      router.push(`/projects/${newStartup.id}`);
-    } catch (err: any) {
-      console.error("Failed to create startup:", err);
-      alert(err.message || "An error occurred while creating the startup");
-      setIsSubmitting(false);
-    }
+    const newProject: StartupProject = {
+      id: projectId,
+      name: name.trim(),
+      description: description.trim(),
+      industry: industry.trim() || "Technology",
+      target_market: targetMarket.trim() || "Global Digital Enterprises",
+      additional_info: additionalInfo.trim() || undefined,
+      status: "Validating",
+      lastEdited: "Just now",
+      progress: 100,
+      category: industry.trim() || "Technology",
+      accent: assignedAccent,
+      viabilityScore: agentOutputs.final_verdict.viabilityScore,
+      agentOutputs,
+    };
+
+    addStartup(newProject);
+    closeModal();
+
+    // Redirect to the dedicated analysis and PDF generation page
+    router.push(`/projects/${projectId}`);
   };
 
   if (!isModalOpen) return null;

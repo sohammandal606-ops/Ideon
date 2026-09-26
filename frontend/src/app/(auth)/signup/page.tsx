@@ -5,29 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-import { useAuth } from "@/context/auth-context";
-
 export default function SignupPage() {
   const router = useRouter();
-  const { signup } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    try {
-      await signup({ name, email, password });
-      // The context logs in after signup and redirects
-    } catch (err: any) {
-      setError(err.message || "Failed to create account");
+    // Pure frontend simulation without backend connection
+    setTimeout(() => {
       setLoading(false);
-    }
+      router.push("/dashboard");
+    }, 600);
   };
 
   return (
@@ -53,12 +46,6 @@ export default function SignupPage() {
             building your startup with specialized AI agents.
           </p>
         </div>
-
-        {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-            {error}
-          </div>
-        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

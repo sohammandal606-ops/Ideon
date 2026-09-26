@@ -211,8 +211,68 @@ export function generateMockAgentOutput(
   };
 }
 
-import { api } from "@/lib/api";
-import { useAuth } from "@/context/auth-context";
+const initialStartups: StartupProject[] = [
+  {
+    id: 1,
+    name: "Acme Corp Analytics",
+    description: "B2B SaaS platform for predictive customer churn analysis and automated retention signals.",
+    industry: "B2B SaaS",
+    target_market: "Mid-market & Enterprise SaaS Companies",
+    additional_info: "Utilizes historical subscription telemetry and product analytics to flag at-risk accounts 45 days before contract renewal.",
+    status: "Validating",
+    lastEdited: "2 hours ago",
+    progress: 100,
+    category: "B2B SaaS",
+    accent: "violet",
+    viabilityScore: 88,
+    agentOutputs: generateMockAgentOutput(
+      "Acme Corp Analytics",
+      "B2B SaaS platform for predictive customer churn analysis and automated retention signals.",
+      "B2B SaaS",
+      "Mid-market & Enterprise SaaS Companies"
+    ),
+  },
+  {
+    id: 2,
+    name: "Fintech API Infrastructure",
+    description: "Open banking infrastructure and real-time payment reconciliation API for Latin America.",
+    industry: "Fintech",
+    target_market: "Digital Banks & Neo-lenders in LATAM",
+    additional_info: "Unified ledger API that connects Pix, SPEI, and local instant rails with automated multi-currency reconciliation.",
+    status: "Building",
+    lastEdited: "1 day ago",
+    progress: 100,
+    category: "Fintech",
+    accent: "emerald",
+    viabilityScore: 92,
+    agentOutputs: generateMockAgentOutput(
+      "Fintech API Infrastructure",
+      "Open banking infrastructure and real-time payment reconciliation API for Latin America.",
+      "Fintech",
+      "Digital Banks & Neo-lenders in LATAM"
+    ),
+  },
+  {
+    id: 3,
+    name: "EcoLogistics Engine",
+    description: "Dynamic supply chain route optimization and scope-3 carbon tracking for sustainable brands.",
+    industry: "CleanTech",
+    target_market: "DTC Retailers & Freight Operators",
+    additional_info: "Combines real-time traffic, electric fleet charging schedules, and automated ESG carbon offsets per delivery.",
+    status: "Draft",
+    lastEdited: "3 days ago",
+    progress: 100,
+    category: "CleanTech",
+    accent: "amber",
+    viabilityScore: 84,
+    agentOutputs: generateMockAgentOutput(
+      "EcoLogistics Engine",
+      "Dynamic supply chain route optimization and scope-3 carbon tracking for sustainable brands.",
+      "CleanTech",
+      "DTC Retailers & Freight Operators"
+    ),
+  },
+];
 
 interface ProjectModalContextType {
   isModalOpen: boolean;
@@ -221,51 +281,40 @@ interface ProjectModalContextType {
   startups: StartupProject[];
   addStartup: (startup: StartupProject) => void;
   getStartup: (id: string | number) => StartupProject | undefined;
-  refreshStartups: () => Promise<void>;
-  loading: boolean;
 }
 
 const ProjectModalContext = createContext<ProjectModalContextType | undefined>(undefined);
 
 export function ProjectModalProvider({ children }: { children: ReactNode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [startups, setStartups] = useState<StartupProject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const [startups, setStartups] = useState<StartupProject[]>(initialStartups);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
-  const refreshStartups = async () => {
-    if (!user) {
-      setStartups([]);
-      setLoading(false);
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const data = await api.startups.list();
-      // Assume the backend returns an array of startups matching (or close to) StartupProject
-      // We might need to map it if the backend format differs slightly, but for now we'll set it.
-      // We'll also attach mock agentOutputs if missing, or use the analysis endpoint later.
-      const formatted = data.map((item: any) => ({
-        ...item,
-        // Map backend fields to frontend fields if necessary
-        category: item.industry || "General",
-        accent: "violet",
-        progress: 100,
-        status: "Validating",
-        lastEdited: "just now",
-      }));
-      setStartups(formatted);
-    } catch (err) {
-      console.error("Failed to fetch startups", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Load from localStorage on client mount
   useEffect(() => {
-    refreshStartups();
-  }, [user]);
+    try {
+      const local = localStorage.getItem("ideon_projects_list");
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setStartups(parsed);
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    setHasHydrated(true);
+  }, []);
+
+  // Sync to localStorage whenever startups state updates (after initial hydration)
+  useEffect(() => {
+    if (!hasHydrated) return;
+    try {
+      localStorage.setItem("ideon_projects_list", JSON.stringify(startups));
+    } catch {
+      // Ignore
+    }
+  }, [startups, hasHydrated]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -287,8 +336,6 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
         startups,
         addStartup,
         getStartup,
-        refreshStartups,
-        loading,
       }}
     >
       {children}
