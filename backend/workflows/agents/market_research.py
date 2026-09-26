@@ -1,7 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from services.llm_service import get_llm
+from core.config import settings
 from workflows.state import StartupState
 from workflows.utils import run_research_agent
 
@@ -25,8 +26,29 @@ async def market_research_node(state: StartupState) -> dict:
     """
     Conducts market research for the startup idea using live web data.
     """
-    llm = get_llm()
-    
+    api_key = (
+        settings.MISTRAL_API_KEY_MARKET_RESEARCH.get_secret_value()
+        if settings.MISTRAL_API_KEY_MARKET_RESEARCH
+        else (
+            settings.MISTRAL_API_KEY.get_secret_value()
+            if settings.MISTRAL_API_KEY
+            else None
+        )
+    )
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY_MARKET_RESEARCH (or MISTRAL_API_KEY) is not configured."
+        )
+
+    llm = ChatMistralAI(
+        model=settings.MISTRAL_MODEL_MARKET_RESEARCH or settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE_MARKET_RESEARCH
+        if settings.MISTRAL_TEMPERATURE_MARKET_RESEARCH is not None
+        else settings.MISTRAL_TEMPERATURE,
+        max_retries=3,
+        api_key=api_key,
+    )
+
     # 1. Live Web Research Phase
     research_prompt = (
         f"Find recent data on the target audience and market size (TAM/SAM/SOM) "
@@ -34,7 +56,7 @@ async def market_research_node(state: StartupState) -> dict:
         f"Description: {state.get('description')}. Target market: {state.get('target_market')}. "
         f"Also find 2-3 current key trends in this specific market."
     )
-    
+
     try:
         research_notes = await run_research_agent(research_prompt)
     except Exception as e:
