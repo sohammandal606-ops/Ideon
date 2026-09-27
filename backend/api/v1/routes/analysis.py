@@ -143,4 +143,3 @@ async def get_analysis_run(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Analysis run not found.",
         )
-

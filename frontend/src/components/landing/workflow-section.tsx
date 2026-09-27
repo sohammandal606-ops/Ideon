@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { HexIcon } from "./hex-icon";
-
 export const AGENT_WORKFLOW = [
   {
     step: 1,

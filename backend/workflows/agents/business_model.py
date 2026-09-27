@@ -1,7 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from services.llm_service import get_llm
+from core.config import settings
 from workflows.state import StartupState
 from workflows.utils import run_research_agent
 
@@ -25,14 +26,35 @@ async def business_model_node(state: StartupState) -> dict:
     """
     Generates a business model for the startup with enriched context and web search.
     """
-    llm = get_llm()
-    
+    api_key = (
+        settings.MISTRAL_API_KEY_BUSINESS_MODEL.get_secret_value()
+        if settings.MISTRAL_API_KEY_BUSINESS_MODEL
+        else (
+            settings.MISTRAL_API_KEY.get_secret_value()
+            if settings.MISTRAL_API_KEY
+            else None
+        )
+    )
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY_BUSINESS_MODEL (or MISTRAL_API_KEY) is not configured."
+        )
+
+    llm = ChatMistralAI(
+        model=settings.MISTRAL_MODEL_BUSINESS_MODEL or settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE_BUSINESS_MODEL
+        if settings.MISTRAL_TEMPERATURE_BUSINESS_MODEL is not None
+        else settings.MISTRAL_TEMPERATURE,
+        max_retries=3,
+        api_key=api_key,
+    )
+
     # 1. Live Web Research Phase
     research_prompt = (
         f"What are the standard pricing models and cost structures for startups in the {state.get('industry')} space? "
         f"Looking for industry benchmarks for {state.get('description')}."
     )
-    
+
     try:
         research_notes = await run_research_agent(research_prompt)
     except Exception as e:
@@ -67,7 +89,9 @@ async def business_model_node(state: StartupState) -> dict:
 
     competitive_advantage = "None"
     if state.get("competitor_analysis"):
-        competitive_advantage = state["competitor_analysis"].get("competitive_advantage", "None")
+        competitive_advantage = state["competitor_analysis"].get(
+            "competitive_advantage", "None"
+        )
 
     result = await chain.ainvoke(
         {

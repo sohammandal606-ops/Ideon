@@ -1,7 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from services.llm_service import get_llm
+from core.config import settings
 from workflows.state import StartupState
 from workflows.utils import run_research_agent
 
@@ -25,14 +26,35 @@ async def gtm_strategy_node(state: StartupState) -> dict:
     """
     Formulates a Go-To-Market strategy using live web search.
     """
-    llm = get_llm()
-    
+    api_key = (
+        settings.MISTRAL_API_KEY_GTM_STRATEGY.get_secret_value()
+        if settings.MISTRAL_API_KEY_GTM_STRATEGY
+        else (
+            settings.MISTRAL_API_KEY.get_secret_value()
+            if settings.MISTRAL_API_KEY
+            else None
+        )
+    )
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY_GTM_STRATEGY (or MISTRAL_API_KEY) is not configured."
+        )
+
+    llm = ChatMistralAI(
+        model=settings.MISTRAL_MODEL_GTM_STRATEGY or settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE_GTM_STRATEGY
+        if settings.MISTRAL_TEMPERATURE_GTM_STRATEGY is not None
+        else settings.MISTRAL_TEMPERATURE,
+        max_retries=3,
+        api_key=api_key,
+    )
+
     # 1. Live Web Research Phase
     research_prompt = (
         f"What are the most effective modern marketing channels and typical Customer Acquisition Costs (CAC) "
         f"for startups in the {state.get('industry')} sector targeting {state.get('target_market')}?"
     )
-    
+
     try:
         research_notes = await run_research_agent(research_prompt)
     except Exception as e:

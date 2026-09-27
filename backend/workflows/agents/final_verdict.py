@@ -1,7 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from services.llm_service import get_llm
+from core.config import settings
 from workflows.state import StartupState
 
 
@@ -28,7 +29,28 @@ async def final_verdict_node(state: StartupState) -> dict:
     Provides the final executive summary and go/no-go decision
     based on the COMPLETE dossier from all previous agents.
     """
-    llm = get_llm()
+    api_key = (
+        settings.MISTRAL_API_KEY_FINAL_VERDICT.get_secret_value()
+        if settings.MISTRAL_API_KEY_FINAL_VERDICT
+        else (
+            settings.MISTRAL_API_KEY.get_secret_value()
+            if settings.MISTRAL_API_KEY
+            else None
+        )
+    )
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY_FINAL_VERDICT (or MISTRAL_API_KEY) is not configured."
+        )
+
+    llm = ChatMistralAI(
+        model=settings.MISTRAL_MODEL_FINAL_VERDICT or settings.MISTRAL_MODEL,
+        temperature=settings.MISTRAL_TEMPERATURE_FINAL_VERDICT
+        if settings.MISTRAL_TEMPERATURE_FINAL_VERDICT is not None
+        else settings.MISTRAL_TEMPERATURE,
+        max_retries=3,
+        api_key=api_key,
+    )
 
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -127,4 +149,3 @@ async def final_verdict_node(state: StartupState) -> dict:
         "progress_percentage": 100,
         "final_verdict": result.model_dump(),
     }
-
