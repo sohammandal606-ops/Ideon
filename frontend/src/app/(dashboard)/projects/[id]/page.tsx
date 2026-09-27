@@ -47,8 +47,9 @@ import {
   useProjectModal,
   StartupProject,
   AgentWorkflowOutput,
-  generateMockAgentOutput,
+  AgentWorkflowOutput,
 } from "@/context/project-modal-context";
+import { fetchApi } from "@/lib/api";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -180,42 +181,63 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
   const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
-    const found = getStartup(projectId);
-    if (found) {
-      if (!found.agentOutputs) {
-        found.agentOutputs = generateMockAgentOutput(
-          found.name,
-          found.description,
-          found.industry,
-          found.target_market,
-          found.additional_info
-        );
+    const fetchProjectData = async () => {
+      const found = getStartup(projectId);
+      if (found && found.agentOutputs) {
+        setProject(found);
+        return;
       }
-      setProject(found);
-    } else {
-      // Fallback if accessed via direct URL
-      const fallback: StartupProject = {
-        id: projectId,
-        name: "Autonomous Venture Engine",
-        description: "Intelligent autonomous startup validation & architecture pipeline.",
-        industry: "B2B SaaS",
-        target_market: "Global Tech Companies & Founders",
-        status: "Validating",
-        lastEdited: "Just now",
-        progress: 100,
-        category: "B2B SaaS",
-        accent: "violet",
-        viabilityScore: 89,
-        agentOutputs: generateMockAgentOutput(
-          "Autonomous Venture Engine",
-          "Intelligent autonomous startup validation & architecture pipeline.",
-          "B2B SaaS",
-          "Global Tech Companies & Founders"
-        ),
-      };
-      setProject(fallback);
-    }
-  }, [projectId, startups, getStartup]);
+      
+      try {
+        const p = await fetchApi(`/startups/${projectId}`);
+        let agentOutputs = undefined;
+        let viabilityScore = undefined;
+        let status: StartupProject["status"] = "Draft";
+        let progress = 0;
+        
+        try {
+          const analysis = await fetchApi(`/startups/${projectId}/analysis`);
+          if (analysis) {
+             progress = analysis.progress_percentage || 0;
+             if (analysis.status === "COMPLETED") {
+               status = "Validating";
+               agentOutputs = analysis.final_state_snapshot;
+               viabilityScore = agentOutputs?.final_verdict?.viabilityScore || agentOutputs?.final_verdict?.overall_score || undefined;
+             } else if (analysis.status === "IN_PROGRESS") {
+               status = "Validating";
+             }
+          }
+        } catch(e) {
+          // Ignore analysis errors
+        }
+        
+        const accents = ["violet", "emerald", "amber", "blue"];
+        const randomAccent = accents[p.name.length % accents.length] as StartupProject["accent"];
+        
+        const fullProject: StartupProject = {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          industry: p.industry,
+          target_market: p.target_market,
+          additional_info: p.additional_info,
+          status,
+          lastEdited: new Date(p.updated_at).toLocaleDateString(),
+          progress,
+          category: p.industry || "General",
+          accent: randomAccent,
+          viabilityScore,
+          agentOutputs,
+        };
+        
+        setProject(fullProject);
+      } catch (e) {
+        console.error("Failed to load project", e);
+      }
+    };
+    
+    fetchProjectData();
+  }, [projectId, getStartup]);
 
   const handleDownloadPDF = () => {
     setIsGeneratingPdf(true);
@@ -354,7 +376,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   </div>
                   <div className="flex items-baseline gap-1 bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-1.5 rounded-xl text-emerald-300">
                     <span className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                      {out.final_verdict.viabilityScore}
+                      {out.final_verdict.overall_score}
                     </span>
                     <span className="text-xs font-semibold opacity-70">/100</span>
                   </div>
@@ -445,7 +467,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
               </div>
 
               <span className="text-[11px] font-mono text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-full">
-                Consensus: {out.final_verdict.viabilityScore}/100
+                Consensus: {out.final_verdict.overall_score}/100
               </span>
             </div>
 
@@ -464,15 +486,15 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       <span className="text-xs font-semibold text-white">1. Idea Validator</span>
                     </div>
                     <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                      Fit: {out.idea_validation.fitScore}/100
+                      Fit: {out.idea_validation.score}/100
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    {out.idea_validation.problemUrgency}
+                    {out.idea_validation.is_valid ? 'High' : 'Low'}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">{out.idea_validation.targetPersona}</span>
+                  <span className="truncate max-w-[170px]">{out.market_research?.target_audience?.[0] || 'Target Audience'}</span>
                   <span className="text-blue-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -491,16 +513,16 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       <span className="text-xs font-semibold text-white">2. Market Research</span>
                     </div>
                     <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                      TAM: {out.market_research.tam}
+                      TAM: {out.market_research.market_size}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-1 text-[11px] mb-2">
-                    <span className="text-zinc-400">SAM: <strong className="text-zinc-200">{out.market_research.sam}</strong></span>
-                    <span className="text-zinc-400">CAGR: <strong className="text-emerald-400">{out.market_research.cagr}</strong></span>
+                    <span className="text-zinc-400">SAM: <strong className="text-zinc-200">{out.market_research.market_size}</strong></span>
+                    <span className="text-zinc-400">CAGR: <strong className="text-emerald-400">{'N/A'}</strong></span>
                   </div>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">SOM: {out.market_research.som}</span>
+                  <span className="truncate max-w-[170px]">SOM: {out.market_research.market_size}</span>
                   <span className="text-indigo-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -523,11 +545,11 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    {out.competitor_analysis.differentiation}
+                    {out.competitor_analysis.competitive_advantage}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">Rivals: {out.competitor_analysis.directRivals[0]}</span>
+                  <span className="truncate max-w-[170px]">Rivals: {out.competitor_analysis.direct_competitors[0]}</span>
                   <span className="text-violet-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -546,15 +568,15 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       <span className="text-xs font-semibold text-white">4. Business Model</span>
                     </div>
                     <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
-                      {out.business_model.pricingTiers[0]?.price || "SaaS"}
+                      {out.business_model.cost_structure[0]?.price || "SaaS"}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    {out.business_model.monetization}
+                    {out.business_model.revenue_streams?.[0] || ''}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">{out.business_model.unitEconomics}</span>
+                  <span className="truncate max-w-[170px]">{out.business_model.pricing_strategy}</span>
                   <span className="text-purple-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -573,15 +595,15 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       <span className="text-xs font-semibold text-white">5. Financial Analyst</span>
                     </div>
                     <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                      {out.financial_analysis.grossMargin}
+                      {out.financial_analysis.startup_costs}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    Payback: {out.financial_analysis.cacPayback} • Break-even: {out.financial_analysis.breakEven}
+                    Payback: {out.financial_analysis.burn_rate_estimate} • Break-even: {out.financial_analysis.break_even_timeline}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">{out.financial_analysis.runwayRecommendation}</span>
+                  <span className="truncate max-w-[170px]">{out.financial_analysis.revenue_projections}</span>
                   <span className="text-emerald-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -604,11 +626,11 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    P0: {out.mvp_plan.p0Features.slice(0, 2).join(", ")}
+                    P0: {out.mvp_plan.core_features.slice(0, 2).join(", ")}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">{out.mvp_plan.timeline[0]?.goal}</span>
+                  <span className="truncate max-w-[170px]">{out.mvp_plan.success_metrics[0]?.goal}</span>
                   <span className="text-amber-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -631,11 +653,11 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    {out.gtm_strategy.flywheel}
+                    {out.gtm_strategy.early_adopter_profile}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">Channel: {out.gtm_strategy.channels[0]}</span>
+                  <span className="truncate max-w-[170px]">Channel: {out.gtm_strategy.launch_channels[0]}</span>
                   <span className="text-cyan-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -654,11 +676,11 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       <span className="text-xs font-semibold text-white">8. Final Verdict</span>
                     </div>
                     <span className="text-[10px] font-bold text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-md border border-rose-500/30">
-                      {out.final_verdict.viabilityScore} / 100
+                      {out.final_verdict.overall_score} / 100
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
-                    {out.final_verdict.verdictTitle}
+                    {out.final_verdict.go_no_go_decision ? 'GO' : 'NO GO'}
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
@@ -815,19 +837,19 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-zinc-400 font-medium">Problem-Solution Fit</span>
                       <p className="text-2xl font-extrabold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
-                        {out.idea_validation.fitScore} / 100
+                        {out.idea_validation.score} / 100
                       </p>
                     </div>
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-zinc-400 font-medium">Pain Point Intensity</span>
                       <p className="text-sm font-semibold text-white">
-                        {out.idea_validation.painPointIntensity}
+                        {out.idea_validation.is_valid ? 'Critical' : 'Moderate'}
                       </p>
                     </div>
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-zinc-400 font-medium">Target Persona</span>
                       <p className="text-sm font-semibold text-white truncate">
-                        {out.idea_validation.targetPersona}
+                        {out.market_research?.target_audience?.[0] || 'Target Audience'}
                       </p>
                     </div>
                   </div>
@@ -838,7 +860,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       Problem Urgency Diagnosis
                     </h3>
                     <p className="text-xs sm:text-sm text-zinc-300 bg-white/[0.02] border border-white/[0.06] p-5 rounded-2xl leading-relaxed backdrop-blur-md">
-                      {out.idea_validation.problemUrgency}
+                      {out.idea_validation.is_valid ? 'High' : 'Low'}
                     </p>
                   </div>
 
@@ -847,7 +869,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       Validated Core Assumptions & Evidence
                     </h3>
                     <div className="space-y-2.5">
-                      {out.idea_validation.coreAssumptions.map((item, i) => (
+                      {out.idea_validation.strengths.map((item, i) => (
                         <div
                           key={i}
                           className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.06] transition-all backdrop-blur-sm"
@@ -874,20 +896,20 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div className="p-5 rounded-2xl bg-blue-500/[0.06] border border-blue-500/25 space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-blue-300 font-medium">TAM (Total Addressable)</span>
-                      <p className="text-2xl font-extrabold text-white">{out.market_research.tam}</p>
+                      <p className="text-2xl font-extrabold text-white">{out.market_research.market_size}</p>
                     </div>
                     <div className="p-5 rounded-2xl bg-indigo-500/[0.06] border border-indigo-500/25 space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-indigo-300 font-medium">SAM (Serviceable)</span>
-                      <p className="text-2xl font-extrabold text-white">{out.market_research.sam}</p>
+                      <p className="text-2xl font-extrabold text-white">{out.market_research.market_size}</p>
                     </div>
                     <div className="p-5 rounded-2xl bg-violet-500/[0.06] border border-violet-500/25 space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-violet-300 font-medium">SOM (Obtainable)</span>
-                      <p className="text-2xl font-extrabold text-white">{out.market_research.som}</p>
+                      <p className="text-2xl font-extrabold text-white">{out.market_research.market_size}</p>
                     </div>
                     <div className="p-5 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/25 space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-emerald-300 font-medium">Market Growth CAGR</span>
                       <p className="text-2xl font-extrabold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
-                        {out.market_research.cagr}
+                        {'N/A'}
                       </p>
                     </div>
                   </div>
@@ -899,7 +921,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         Sector Tailwinds & Key Drivers
                       </h3>
                       <ul className="space-y-2.5">
-                        {out.market_research.tailwinds.map((t, idx) => (
+                        {out.market_research.key_trends.map((t, idx) => (
                           <li key={idx} className="text-xs sm:text-sm text-zinc-300 flex items-start gap-2.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-1.5" />
                             <span>{t}</span>
@@ -914,7 +936,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         Emerging Global Trends
                       </h3>
                       <ul className="space-y-2.5">
-                        {out.market_research.trends.map((t, idx) => (
+                        {out.market_research.key_trends.map((t, idx) => (
                           <li key={idx} className="text-xs sm:text-sm text-zinc-300 flex items-start gap-2.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-1.5" />
                             <span>{t}</span>
@@ -939,7 +961,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <div className="p-5 rounded-2xl bg-gradient-to-r from-violet-900/30 via-purple-900/20 to-transparent border border-violet-500/30 space-y-2 backdrop-blur-md">
                     <h3 className="text-sm font-bold text-white">Competitive Differentiation Vector</h3>
                     <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
-                      {out.competitor_analysis.differentiation}
+                      {out.competitor_analysis.competitive_advantage}
                     </p>
                   </div>
 
@@ -949,7 +971,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         <Target className="w-3.5 h-3.5" /> Direct Competitors
                       </h4>
                       <ul className="space-y-2 text-xs text-zinc-300">
-                        {out.competitor_analysis.directRivals.map((item, idx) => (
+                        {out.competitor_analysis.direct_competitors.map((item, idx) => (
                           <li key={idx} className="flex items-start gap-2">
                             <span className="text-rose-400">•</span>
                             <span>{item}</span>
@@ -963,7 +985,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         <Compass className="w-3.5 h-3.5" /> Indirect Substitutes
                       </h4>
                       <ul className="space-y-2 text-xs text-zinc-300">
-                        {out.competitor_analysis.indirectRivals.map((item, idx) => (
+                        {out.competitor_analysis.indirect_competitors.map((item, idx) => (
                           <li key={idx} className="flex items-start gap-2">
                             <span className="text-amber-400">•</span>
                             <span>{item}</span>
@@ -977,7 +999,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         <ShieldCheck className="w-3.5 h-3.5" /> Defensible Moats
                       </h4>
                       <ul className="space-y-2 text-xs text-zinc-300">
-                        {out.competitor_analysis.moats.map((item, idx) => (
+                        {out.competitor_analysis.barriers_to_entry.map((item, idx) => (
                           <li key={idx} className="flex items-start gap-2">
                             <span className="text-emerald-400">•</span>
                             <span>{item}</span>
@@ -1002,15 +1024,15 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] backdrop-blur-md">
                     <span className="text-xs text-zinc-400 font-medium">Monetization Engine</span>
                     <p className="text-base font-bold text-white mt-1">
-                      {out.business_model.monetization}
+                      {out.business_model.revenue_streams?.[0] || ''}
                     </p>
                     <p className="text-xs font-semibold text-emerald-400 mt-1">
-                      {out.business_model.unitEconomics}
+                      {out.business_model.pricing_strategy}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {out.business_model.pricingTiers.map((tier, idx) => (
+                    {out.business_model.cost_structure.map((tier, idx) => (
                       <div
                         key={idx}
                         className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-purple-500/50 transition-all flex flex-col justify-between backdrop-blur-md group hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
@@ -1042,26 +1064,26 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-zinc-400">Gross Margin Target</span>
                       <p className="text-2xl font-extrabold text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">
-                        {out.financial_analysis.grossMargin}
+                        {out.financial_analysis.startup_costs}
                       </p>
                     </div>
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-zinc-400">CAC Payback Timeline</span>
-                      <p className="text-2xl font-extrabold text-white">{out.financial_analysis.cacPayback}</p>
+                      <p className="text-2xl font-extrabold text-white">{out.financial_analysis.burn_rate_estimate}</p>
                     </div>
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-1.5 backdrop-blur-md">
                       <span className="text-xs text-zinc-400">Break-even Milestone</span>
-                      <p className="text-2xl font-extrabold text-blue-400">{out.financial_analysis.breakEven}</p>
+                      <p className="text-2xl font-extrabold text-blue-400">{out.financial_analysis.break_even_timeline}</p>
                     </div>
                   </div>
 
                   <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-2.5 backdrop-blur-md">
                     <h3 className="text-sm font-bold text-white">Capital & Runway Recommendation</h3>
                     <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                      {out.financial_analysis.runwayRecommendation}
+                      {out.financial_analysis.revenue_projections}
                     </p>
                     <p className="text-xs text-zinc-400">
-                      Estimated Operating Burn: <span className="text-zinc-200 font-semibold">{out.financial_analysis.monthlyBurnEstimate}</span>
+                      Estimated Operating Burn: <span className="text-zinc-200 font-semibold">{out.financial_analysis.burn_rate_estimate}</span>
                     </p>
                   </div>
                 </motion.div>
@@ -1080,7 +1102,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <div className="space-y-3">
                     <h3 className="text-sm font-bold text-white">Core P0 Feature Scope</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {out.mvp_plan.p0Features.map((feat, idx) => (
+                      {out.mvp_plan.core_features.map((feat, idx) => (
                         <div
                           key={idx}
                           className="p-4 rounded-xl bg-white/[0.025] border border-white/[0.06] flex items-center gap-3 backdrop-blur-sm"
@@ -1095,7 +1117,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <div className="space-y-3">
                     <h3 className="text-sm font-bold text-white">4-Week Build Sprint Timeline</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-                      {out.mvp_plan.timeline.map((sprint, idx) => (
+                      {out.mvp_plan.success_metrics.map((sprint, idx) => (
                         <div
                           key={idx}
                           className="p-4.5 rounded-xl bg-white/[0.03] border border-white/[0.07] space-y-2 backdrop-blur-sm"
@@ -1124,7 +1146,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-900/30 via-blue-900/20 to-transparent border border-cyan-500/30 space-y-2 backdrop-blur-md">
                     <h3 className="text-sm font-bold text-white">Growth & Distribution Flywheel</h3>
                     <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                      {out.gtm_strategy.flywheel}
+                      {out.gtm_strategy.early_adopter_profile}
                     </p>
                   </div>
 
@@ -1132,7 +1154,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-3.5 backdrop-blur-md">
                       <h3 className="text-sm font-bold text-white">Core Acquisition Channels</h3>
                       <ul className="space-y-2.5">
-                        {out.gtm_strategy.channels.map((ch, idx) => (
+                        {out.gtm_strategy.launch_channels.map((ch, idx) => (
                           <li key={idx} className="text-xs sm:text-sm text-zinc-300 flex items-start gap-2.5">
                             <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
                             <span>{ch}</span>
@@ -1144,7 +1166,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     <div className="p-5 rounded-2xl bg-white/[0.025] border border-white/[0.07] space-y-3.5 backdrop-blur-md">
                       <h3 className="text-sm font-bold text-white">First 100 Customers Execution Plan</h3>
                       <ul className="space-y-2.5">
-                        {out.gtm_strategy.first100Customers.map((step, idx) => (
+                        {out.gtm_strategy.marketing_tactics.map((step, idx) => (
                           <li key={idx} className="text-xs sm:text-sm text-zinc-300 flex items-start gap-2.5">
                             <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                             <span>{step}</span>
@@ -1171,7 +1193,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-indigo-600/30 border border-purple-500/40 flex flex-col items-center justify-center shrink-0 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
                         <span className="text-2xl font-extrabold text-white">
-                          {out.final_verdict.viabilityScore}
+                          {out.final_verdict.overall_score}
                         </span>
                         <span className="text-[10px] text-purple-300 font-semibold">/ 100</span>
                       </div>
@@ -1183,7 +1205,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                           <span className="text-xs text-zinc-400">8-Agent Consensus Engine</span>
                         </div>
                         <h3 className="text-base sm:text-lg font-bold text-white mt-1">
-                          {out.final_verdict.verdictTitle}
+                          {out.final_verdict.go_no_go_decision ? 'GO' : 'NO GO'}
                         </h3>
                       </div>
                     </div>
@@ -1196,7 +1218,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       Executive Investment Memo
                     </h3>
                     <p className="text-xs sm:text-sm text-zinc-200 bg-white/[0.02] border border-white/[0.06] p-5 rounded-2xl leading-relaxed backdrop-blur-md">
-                      {out.final_verdict.executiveSummary}
+                      {out.final_verdict.executive_summary}
                     </p>
                   </div>
 
@@ -1208,7 +1230,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         Core Defensible Strengths
                       </div>
                       <ul className="space-y-2.5">
-                        {out.final_verdict.keyStrengths.map((item, idx) => (
+                        {out.idea_validation.strengths.map((item, idx) => (
                           <li key={idx} className="text-xs sm:text-sm text-zinc-300 flex items-start gap-2">
                             <span className="text-emerald-400 mt-0.5">•</span>
                             <span>{item}</span>
@@ -1223,7 +1245,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                         Risk Vectors & Mitigations
                       </div>
                       <ul className="space-y-2.5">
-                        {out.final_verdict.criticalRisks.map((item, idx) => (
+                        {out.final_verdict.top_3_risks.map((item, idx) => (
                           <li key={idx} className="text-xs sm:text-sm text-zinc-300 flex items-start gap-2">
                             <span className="text-rose-400 mt-0.5">•</span>
                             <span>{item}</span>
@@ -1240,7 +1262,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       Immediate 30-Day Execution Milestones
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                      {out.final_verdict.immediateActions.map((action, idx) => (
+                      {out.mvp_plan.core_features.map((action, idx) => (
                         <div
                           key={idx}
                           className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs text-zinc-300"
@@ -1272,7 +1294,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
             </div>
             <div className="text-right border-l-2 border-zinc-200 pl-4">
               <div className="text-3xl font-black text-blue-600">
-                {out.final_verdict.viabilityScore}<span className="text-sm font-normal text-zinc-500">/100</span>
+                {out.final_verdict.overall_score}<span className="text-sm font-normal text-zinc-500">/100</span>
               </div>
               <div className="text-xs font-semibold uppercase text-emerald-700 mt-0.5">
                 Venture Ready Score
@@ -1289,7 +1311,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
               Executive Summary & Investment Verdict
             </h2>
             <p className="text-xs text-zinc-800 leading-relaxed font-medium">
-              {out.final_verdict.executiveSummary}
+              {out.final_verdict.executive_summary}
             </p>
           </div>
 
@@ -1303,20 +1325,20 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
               <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/60">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-xs text-blue-900">1. Idea Validator</span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Fit: {out.idea_validation.fitScore}/100</span>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Fit: {out.idea_validation.score}/100</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">{out.idea_validation.problemUrgency}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">Persona: {out.idea_validation.targetPersona}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">{out.idea_validation.is_valid ? 'High' : 'Low'}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">Persona: {out.market_research?.target_audience?.[0] || 'Target Audience'}</div>
               </div>
 
               {/* Agent 2 Summary */}
               <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/60">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-xs text-indigo-900">2. Market Research</span>
-                  <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.5 rounded">TAM: {out.market_research.tam}</span>
+                  <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.5 rounded">TAM: {out.market_research.market_size}</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">SAM: {out.market_research.sam} • SOM: {out.market_research.som} • Growth: {out.market_research.cagr}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">Trend: {out.market_research.tailwinds[0]}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">SAM: {out.market_research.market_size} • SOM: {out.market_research.market_size} • Growth: {'N/A'}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">Trend: {out.market_research.key_trends[0]}</div>
               </div>
 
               {/* Agent 3 Summary */}
@@ -1325,28 +1347,28 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <span className="font-bold text-xs text-purple-900">3. Competitor Analyst</span>
                   <span className="text-[10px] font-bold text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">Moats Verified</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">{out.competitor_analysis.differentiation}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">Direct: {out.competitor_analysis.directRivals.join(", ")}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">{out.competitor_analysis.competitive_advantage}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">Direct: {out.competitor_analysis.direct_competitors.join(", ")}</div>
               </div>
 
               {/* Agent 4 Summary */}
               <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/60">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-xs text-violet-900">4. Business Model</span>
-                  <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{out.business_model.pricingTiers[0]?.price}</span>
+                  <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{out.business_model.cost_structure[0]?.price}</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">{out.business_model.monetization}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">{out.business_model.unitEconomics}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">{out.business_model.revenue_streams?.[0] || ''}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">{out.business_model.pricing_strategy}</div>
               </div>
 
               {/* Agent 5 Summary */}
               <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/60">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-xs text-emerald-900">5. Financial Analyst</span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">{out.financial_analysis.grossMargin}</span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">{out.financial_analysis.startup_costs}</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">Payback: {out.financial_analysis.cacPayback} • Break-even: {out.financial_analysis.breakEven}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">{out.financial_analysis.runwayRecommendation}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">Payback: {out.financial_analysis.burn_rate_estimate} • Break-even: {out.financial_analysis.break_even_timeline}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">{out.financial_analysis.revenue_projections}</div>
               </div>
 
               {/* Agent 6 Summary */}
@@ -1355,8 +1377,8 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <span className="font-bold text-xs text-amber-900">6. MVP Planner</span>
                   <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">4 Weeks</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">P0 Scope: {out.mvp_plan.p0Features.join("; ")}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">Sprint 1: {out.mvp_plan.timeline[0]?.goal}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">P0 Scope: {out.mvp_plan.core_features.join("; ")}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">Sprint 1: {out.mvp_plan.success_metrics[0]?.goal}</div>
               </div>
 
               {/* Agent 7 Summary */}
@@ -1365,17 +1387,17 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <span className="font-bold text-xs text-cyan-900">7. GTM Specialist</span>
                   <span className="text-[10px] font-bold text-cyan-800 bg-cyan-100 px-1.5 py-0.5 rounded">Growth Engine</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">{out.gtm_strategy.flywheel}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">Channels: {out.gtm_strategy.channels.slice(0, 2).join(", ")}</div>
+                <p className="text-[11px] text-zinc-700 leading-snug">{out.gtm_strategy.early_adopter_profile}</p>
+                <div className="text-[10px] text-zinc-500 mt-1">Channels: {out.gtm_strategy.launch_channels.slice(0, 2).join(", ")}</div>
               </div>
 
               {/* Agent 8 Summary */}
               <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/60">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-xs text-rose-900">8. Final Verdict</span>
-                  <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded">Score: {out.final_verdict.viabilityScore}/100</span>
+                  <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded">Score: {out.final_verdict.overall_score}/100</span>
                 </div>
-                <p className="text-[11px] text-zinc-700 leading-snug">{out.final_verdict.verdictTitle}</p>
+                <p className="text-[11px] text-zinc-700 leading-snug">{out.final_verdict.go_no_go_decision ? 'GO' : 'NO GO'}</p>
                 <div className="text-[10px] text-zinc-500 mt-1">3 Key Milestones Ready</div>
               </div>
             </div>
@@ -1386,7 +1408,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
             <div className="p-3 border border-emerald-200 bg-emerald-50/40 rounded-lg">
               <h3 className="text-xs font-bold text-emerald-900 uppercase mb-1.5">Key Defensible Strengths</h3>
               <ul className="text-[11px] text-zinc-800 space-y-1">
-                {out.final_verdict.keyStrengths.map((item, idx) => (
+                {out.idea_validation.strengths.map((item, idx) => (
                   <li key={idx}>✓ {item}</li>
                 ))}
               </ul>
@@ -1395,7 +1417,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
             <div className="p-3 border border-rose-200 bg-rose-50/40 rounded-lg">
               <h3 className="text-xs font-bold text-rose-900 uppercase mb-1.5">Critical Risks & Mitigations</h3>
               <ul className="text-[11px] text-zinc-800 space-y-1">
-                {out.final_verdict.criticalRisks.map((item, idx) => (
+                {out.final_verdict.top_3_risks.map((item, idx) => (
                   <li key={idx}>⚠ {item}</li>
                 ))}
               </ul>
@@ -1406,7 +1428,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
           <div className="p-3 border border-zinc-300 rounded-lg bg-zinc-50">
             <h3 className="text-xs font-bold text-zinc-900 uppercase mb-1.5">Immediate 30-Day Execution Milestones</h3>
             <div className="grid grid-cols-3 gap-2 text-[11px] text-zinc-800">
-              {out.final_verdict.immediateActions.map((action, idx) => (
+              {out.mvp_plan.core_features.map((action, idx) => (
                 <div key={idx} className="p-2 border border-zinc-200 rounded bg-white">
                   <span className="font-bold text-blue-700 block mb-0.5">Milestone 0{idx + 1}</span>
                   {action}

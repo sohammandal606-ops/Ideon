@@ -20,8 +20,8 @@ import {
 import {
   useProjectModal,
   StartupProject,
-  generateMockAgentOutput,
 } from "@/context/project-modal-context";
+import { fetchApi } from "@/lib/api";
 
 interface FormErrors {
   name?: string;
@@ -56,13 +56,15 @@ export function NewProjectModal() {
   // Reset form when modal opens
   useEffect(() => {
     if (isModalOpen) {
-      setName("");
-      setDescription("");
-      setIndustry("");
-      setTargetMarket("");
-      setAdditionalInfo("");
-      setErrors({});
-      setIsSubmitting(false);
+      setTimeout(() => {
+        setName("");
+        setDescription("");
+        setIndustry("");
+        setTargetMarket("");
+        setAdditionalInfo("");
+        setErrors({});
+        setIsSubmitting(false);
+      }, 0);
     }
   }, [isModalOpen]);
 
@@ -86,50 +88,63 @@ export function NewProjectModal() {
   };
 
   // Start AI Multi-Agent Analysis and redirect to dedicated page
-  const handleStartAnalysis = (e: React.FormEvent) => {
+  const handleStartAnalysis = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    const accents: Array<"violet" | "emerald" | "amber" | "blue"> = [
-      "violet",
-      "emerald",
-      "amber",
-      "blue",
-    ];
-    const assignedAccent = accents[Math.floor(Math.random() * accents.length)];
-    const projectId = Date.now().toString();
+    try {
+      // 1. Create Startup in DB
+      const startupPayload = {
+        name: name.trim(),
+        description: description.trim(),
+        industry: industry.trim() || undefined,
+        target_market: targetMarket.trim() || undefined,
+        additional_info: additionalInfo.trim() || undefined,
+      };
+      
+      const startup = await fetchApi("/startups", {
+        method: "POST",
+        body: JSON.stringify(startupPayload),
+      });
 
-    const agentOutputs = generateMockAgentOutput(
-      name.trim(),
-      description.trim(),
-      industry.trim() || undefined,
-      targetMarket.trim() || undefined,
-      additionalInfo.trim() || undefined
-    );
+      // 2. Start Analysis Run
+      await fetchApi(`/startups/${startup.id}/analysis`, {
+        method: "POST",
+        body: JSON.stringify({ force_re_run: false }),
+      });
 
-    const newProject: StartupProject = {
-      id: projectId,
-      name: name.trim(),
-      description: description.trim(),
-      industry: industry.trim() || "Technology",
-      target_market: targetMarket.trim() || "Global Digital Enterprises",
-      additional_info: additionalInfo.trim() || undefined,
-      status: "Validating",
-      lastEdited: "Just now",
-      progress: 100,
-      category: industry.trim() || "Technology",
-      accent: assignedAccent,
-      viabilityScore: agentOutputs.final_verdict.viabilityScore,
-      agentOutputs,
-    };
+      const accents: Array<"violet" | "emerald" | "amber" | "blue"> = [
+        "violet",
+        "emerald",
+        "amber",
+        "blue",
+      ];
+      const assignedAccent = accents[Math.floor(Math.random() * accents.length)];
 
-    addStartup(newProject);
-    closeModal();
+      const newProject: StartupProject = {
+        id: startup.id,
+        name: startup.name,
+        description: startup.description,
+        industry: startup.industry,
+        target_market: startup.target_market,
+        additional_info: startup.additional_info,
+        status: "Validating",
+        lastEdited: "Just now",
+        progress: 0,
+        category: startup.industry || "Technology",
+        accent: assignedAccent,
+      };
 
-    // Redirect to the dedicated analysis and PDF generation page
-    router.push(`/projects/${projectId}`);
+      addStartup(newProject);
+      closeModal();
+      router.push(`/projects/${startup.id}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to create project";
+      alert(msg);
+      setIsSubmitting(false);
+    }
   };
 
   if (!isModalOpen) return null;

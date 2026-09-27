@@ -22,7 +22,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     try {
       const saved = localStorage.getItem("ideon_sidebar_collapsed");
       if (saved !== null) {
-        setIsCollapsed(saved === "true");
+        setTimeout(() => setIsCollapsed(saved === "true"), 0);
       }
     } catch {
       // Ignore localStorage errors

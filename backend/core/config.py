@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     SUPABASE_SECRET_KEY: SecretStr
 
     # LLM settings (optional until agents/workflows are active)
-    MISTRAL_API_KEY: SecretStr | None = None
-    MISTRAL_MODEL: str = "mistral-large-latest"
-    MISTRAL_TEMPERATURE: float = 0.2
+    GROQ_API_KEY: SecretStr | None = None
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
+    GROQ_TEMPERATURE: float = 0.2
 
     model_config = SettingsConfigDict(
         env_file=".env",

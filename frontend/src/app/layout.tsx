@@ -25,6 +25,8 @@ export const viewport: Viewport = {
   themeColor: "#0a0a0a",
 };
 
+import { AuthProvider } from "@/context/auth-context";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -33,7 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-[#0a0a0a] text-[#fafafa] overflow-x-hidden">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

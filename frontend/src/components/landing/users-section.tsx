@@ -85,13 +85,13 @@ function ProfileCard({
       <div
         className={`relative rounded-2xl overflow-hidden transition-all duration-300 ${
           active
-            ? "border border-white/[0.14] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(139,92,246,0.1)]"
-            : "border border-white/[0.07] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]"
+            ? "border border-slate-300 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(139,92,246,0.1)]"
+            : "border border-slate-200 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]"
         }`}
         style={{
           background: active
-            ? "linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)"
-            : "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+            ? "linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.05) 100%)"
+            : "linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.05) 100%)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
         }}
@@ -101,7 +101,7 @@ function ProfileCard({
           className="absolute inset-x-0 top-0 h-px pointer-events-none"
           style={{
             background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.12) 50%, transparent)",
+              "linear-gradient(90deg, transparent, rgba(0,0,0,0.05) 50%, transparent)",
           }}
         />
 
@@ -112,19 +112,19 @@ function ProfileCard({
               <div
                 className={`absolute -inset-0.5 rounded-full bg-gradient-to-br ${profile.avatarGradient} opacity-80`}
               />
-              <div className="relative w-[52px] h-[52px] rounded-full bg-[#141414] border border-white/[0.08] flex items-center justify-center">
-                <span className="text-[15px] font-semibold text-zinc-200 tracking-tight">
+              <div className="relative w-[52px] h-[52px] rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
+                <span className="text-[15px] font-semibold text-slate-800 tracking-tight">
                   {profile.avatar}
                 </span>
               </div>
             </div>
 
             <div className="flex-1 min-w-0 pt-0.5">
-              <p className="text-[16px] font-semibold text-white tracking-tight leading-tight">
+              <p className="text-[16px] font-semibold text-slate-900 tracking-tight leading-tight">
                 {profile.name}
               </p>
-              <p className="text-[13px] text-zinc-500 mt-0.5">{profile.handle}</p>
-              <p className="text-[13px] text-zinc-400 mt-1 leading-snug">{profile.role}</p>
+              <p className="text-[13px] text-slate-500 mt-0.5">{profile.handle}</p>
+              <p className="text-[13px] text-slate-600 mt-1 leading-snug">{profile.role}</p>
             </div>
           </div>
 
@@ -133,9 +133,9 @@ function ProfileCard({
             {profile.tools.map((tool) => (
               <span
                 key={tool}
-                className="inline-flex items-center gap-2 px-3.5 py-[7px] rounded-full text-[11.5px] font-medium text-zinc-300 border border-white/[0.07] transition-colors duration-200"
+                className="inline-flex items-center gap-2 px-3.5 py-[7px] rounded-full text-[11.5px] font-medium text-slate-700 border border-slate-200 transition-colors duration-200"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
+                  background: "rgba(0,0,0,0.05)",
                 }}
               >
                 <span className="relative flex h-1.5 w-1.5">
@@ -180,9 +180,9 @@ export function UsersSection() {
             transition={{ duration: 0.6 }}
             className="relative z-10"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] mb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 mb-5">
               <HexIcon className="w-3.5 h-3.5" />
-              <span className="text-[12px] text-zinc-400 font-medium tracking-wide">Our Users</span>
+              <span className="text-[12px] text-slate-600 font-medium tracking-wide">Our Users</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-[44px] font-semibold tracking-[-0.035em] leading-[1.12] mb-5">
@@ -191,7 +191,7 @@ export function UsersSection() {
               Modern Founder
             </h2>
 
-            <p className="text-[14px] sm:text-[15px] text-zinc-500 leading-[1.8] max-w-[420px] mb-8">
+            <p className="text-[14px] sm:text-[15px] text-slate-500 leading-[1.8] max-w-[420px] mb-8">
               Ideon integrates seamlessly into your startup-building workflow. Whether you&apos;re
               validating your first idea or scaling your third venture, our AI agents adapt to your
               stage and deliver evidence-backed insights.
@@ -208,14 +208,14 @@ export function UsersSection() {
                 ].map((user, i) => (
                   <div
                     key={user.initials}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-[#0a0a0a] ${user.color} flex items-center justify-center text-[10px] font-semibold text-zinc-300`}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white ${user.color} flex items-center justify-center text-[10px] font-semibold text-slate-700`}
                     style={{ zIndex: 5 - i }}
                   >
                     {user.initials}
                   </div>
                 ))}
               </div>
-              <div className="h-4 w-px bg-white/[0.08]" />
+              <div className="h-4 w-px bg-slate-50" />
               <span className="text-[13px] sm:text-[14px] font-semibold text-amber-400/90">10,000+ Founders</span>
             </div>
           </motion.div>
@@ -230,9 +230,9 @@ export function UsersSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="relative rounded-2xl overflow-hidden border border-white/[0.08]"
+                className="relative rounded-2xl overflow-hidden border border-slate-200"
                 style={{
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+                  background: "linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.05) 100%)",
                   backdropFilter: "blur(24px)",
                 }}
               >
@@ -240,21 +240,21 @@ export function UsersSection() {
                   <div className="flex items-start gap-4 mb-4">
                     <div className="relative shrink-0">
                       <div className={`absolute -inset-0.5 rounded-full bg-gradient-to-br ${profile.avatarGradient} opacity-80`} />
-                      <div className="relative w-12 h-12 rounded-full bg-[#141414] border border-white/[0.08] flex items-center justify-center">
-                        <span className="text-[14px] font-semibold text-zinc-200">{profile.avatar}</span>
+                      <div className="relative w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
+                        <span className="text-[14px] font-semibold text-slate-800">{profile.avatar}</span>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-semibold text-white tracking-tight">{profile.name}</p>
-                      <p className="text-[12px] text-zinc-500 mt-0.5">{profile.handle}</p>
-                      <p className="text-[12px] text-zinc-400 mt-0.5 leading-snug">{profile.role}</p>
+                      <p className="text-[15px] font-semibold text-slate-900 tracking-tight">{profile.name}</p>
+                      <p className="text-[12px] text-slate-500 mt-0.5">{profile.handle}</p>
+                      <p className="text-[12px] text-slate-600 mt-0.5 leading-snug">{profile.role}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {profile.tools.map((tool) => (
                       <span
                         key={tool}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium text-zinc-300 border border-white/[0.07] bg-white/[0.04]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium text-slate-700 border border-slate-200 bg-slate-50"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                         {tool}
@@ -271,7 +271,7 @@ export function UsersSection() {
             <div
               className="absolute inset-0 rounded-3xl opacity-30 pointer-events-none"
               style={{
-                backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px)",
                 backgroundSize: "20px 20px",
               }}
             />

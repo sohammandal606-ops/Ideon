@@ -1,21 +1,21 @@
-"""Creates a ChatMistralAI instance using centralized settings.
+"""Creates a ChatGroq instance using centralized settings.
 
-Depends on: core.config (MISTRAL_API_KEY, MISTRAL_MODEL, MISTRAL_TEMPERATURE)
+Depends on: core.config (GROQ_API_KEY, GROQ_MODEL, GROQ_TEMPERATURE)
 Used by:    agents, workflows (future)
 """
 
-from langchain_mistralai import ChatMistralAI
+from langchain_groq import ChatGroq
 
 from core.config import settings
 
 
-def get_llm() -> ChatMistralAI:
-    if settings.MISTRAL_API_KEY is None:
-        raise ValueError("MISTRAL_API_KEY is not configured.")
+def get_llm() -> ChatGroq:
+    if settings.GROQ_API_KEY is None:
+        raise ValueError("GROQ_API_KEY is not configured.")
 
-    return ChatMistralAI(
-        model=settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE,
+    return ChatGroq(
+        model=settings.GROQ_MODEL,
+        temperature=settings.GROQ_TEMPERATURE,
         max_retries=3,
-        api_key=settings.MISTRAL_API_KEY.get_secret_value(),
+        api_key=settings.GROQ_API_KEY.get_secret_value(),
     )

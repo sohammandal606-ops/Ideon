@@ -24,7 +24,7 @@ Architecture:
         ↓
     LangGraph Workflow
         ↓
-    Mistral AI
+    Groq AI
 """
 
 from uuid import UUID
