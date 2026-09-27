@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 "use client";
 
 import { useRef, useState, useEffect, useCallback, useMemo } from "react";
@@ -99,7 +100,8 @@ export function AgentGlobeVisual() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const spherePoints = useMemo(() => fibonacciSphere(AGENTS.length, 1), []);
@@ -111,8 +113,11 @@ export function AgentGlobeVisual() {
   const nodeScale = size * 0.36;
   const sphereRadius = 0.92;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const { projected, wireframe } = useMemo(() => {
+    // eslint-disable-next-line react-hooks/refs
     const rx = rotX.current;
+    // eslint-disable-next-line react-hooks/refs
     const ry = rotY.current;
 
     const projected = AGENTS.map((agent, i) => {
@@ -154,16 +159,16 @@ export function AgentGlobeVisual() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = true;
     setIsDragging(true);
     lastPointer.current = { x: e.clientX, y: e.clientY };
     velX.current = 0;
     velY.current = 0;
     e.currentTarget.setPointerCapture(e.pointerId);
-  }, []);
+  };
 
-  const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
     const dx = e.clientX - lastPointer.current.x;
     const dy = e.clientY - lastPointer.current.y;
@@ -174,13 +179,13 @@ export function AgentGlobeVisual() {
     velY.current = dy * 0.00035;
     lastPointer.current = { x: e.clientX, y: e.clientY };
     setFrame((f) => f + 1);
-  }, []);
+  };
 
-  const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = false;
     setIsDragging(false);
     e.currentTarget.releasePointerCapture(e.pointerId);
-  }, []);
+  };
 
   if (!mounted) {
     return (
@@ -331,7 +336,7 @@ export function AgentGlobeVisual() {
         })}
       </svg>
 
-      <p className="absolute bottom-5 text-[11px] text-zinc-500 tracking-wide pointer-events-none flex items-center gap-2 opacity-70">
+      <p className="absolute bottom-5 text-[11px] text-slate-500 tracking-wide pointer-events-none flex items-center gap-2 opacity-70">
         <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.2">
           <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.4 1.4M11.55 11.55l1.4 1.4M3.05 12.95l1.4-1.4M11.55 4.45l1.4-1.4" />
         </svg>

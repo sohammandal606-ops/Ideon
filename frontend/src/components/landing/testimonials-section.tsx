@@ -55,22 +55,22 @@ export function TestimonialsSection() {
             <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.03em] mb-5">
               Our Clients Say
             </h2>
-            <p className="text-[15px] text-zinc-500 leading-[1.75] max-w-[400px] mb-8">
+            <p className="text-[15px] text-slate-500 leading-[1.75] max-w-[400px] mb-8">
               Founders and advisors trust Ideon to turn raw ideas into structured, actionable
               startup strategies backed by real evidence.
             </p>
             <div className="flex items-center gap-3">
               <button
                 onClick={prev}
-                className="w-10 h-10 rounded-full border border-white/[0.12] flex items-center justify-center hover:bg-white/[0.05] transition-colors"
+                className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50 transition-colors"
               >
-                <ChevronLeft className="w-4 h-4 text-zinc-400" />
+                <ChevronLeft className="w-4 h-4 text-slate-600" />
               </button>
               <button
                 onClick={next}
-                className="w-10 h-10 rounded-full border border-white/[0.12] flex items-center justify-center hover:bg-white/[0.05] transition-colors"
+                className="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50 transition-colors"
               >
-                <ChevronRight className="w-4 h-4 text-zinc-400" />
+                <ChevronRight className="w-4 h-4 text-slate-600" />
               </button>
             </div>
           </motion.div>
@@ -89,11 +89,11 @@ export function TestimonialsSection() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.3 }}
               >
-                <p className="text-xl md:text-2xl text-zinc-300 leading-relaxed mb-6">
+                <p className="text-xl md:text-2xl text-slate-700 leading-relaxed mb-6">
                   &ldquo;{TESTIMONIALS[active].quote}&rdquo;
                 </p>
-                <p className="text-[15px] font-medium text-white">{TESTIMONIALS[active].name}</p>
-                <p className="text-[13px] text-zinc-500">
+                <p className="text-[15px] font-medium text-slate-900">{TESTIMONIALS[active].name}</p>
+                <p className="text-[13px] text-slate-500">
                   {TESTIMONIALS[active].role} • {TESTIMONIALS[active].date}
                 </p>
               </motion.div>
@@ -113,16 +113,16 @@ export function TestimonialsSection() {
               transition={{ delay: i * 0.1 }}
               className={`text-left glass-surface rounded-xl p-5 transition-all ${
                 i === active
-                  ? "border-white/[0.12] shadow-[0_0_40px_-8px_rgba(139,92,246,0.25)] scale-[1.02]"
+                  ? "border-slate-300 shadow-[0_0_40px_-8px_rgba(139,92,246,0.25)] scale-[1.02]"
                   : "opacity-70 hover:opacity-100"
               }`}
             >
               <HexIcon className="w-3.5 h-3.5 mb-4 ml-auto" />
-              <p className="text-[13px] font-semibold text-white">{t.name}</p>
-              <p className="text-[11px] text-zinc-500 mb-3">
+              <p className="text-[13px] font-semibold text-slate-900">{t.name}</p>
+              <p className="text-[11px] text-slate-500 mb-3">
                 {t.role} • {t.date}
               </p>
-              <p className="text-[12px] text-zinc-400 leading-relaxed line-clamp-3">{t.quote}</p>
+              <p className="text-[12px] text-slate-600 leading-relaxed line-clamp-3">{t.quote}</p>
             </motion.button>
           ))}
         </div>

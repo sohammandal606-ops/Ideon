@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/sidebar-context";
+import { useAuth } from "@/context/auth-context";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -24,6 +25,7 @@ const navigation = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const { profile, user, signOut } = useAuth();
 
   return (
     <aside
@@ -150,15 +152,17 @@ export function DashboardSidebar() {
       >
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3 px-1")}>
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-            <span className="text-[12px] font-semibold text-white">FE</span>
+            <span className="text-[12px] font-semibold text-white uppercase">
+              {profile?.name ? profile.name.slice(0, 2) : user?.email?.slice(0, 2) || "??"}
+            </span>
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-white truncate leading-tight">
-                Franklin Eugene
+                {profile?.name || "User"}
               </p>
               <p className="text-[11px] text-zinc-400 truncate">
-                eug.frank01@ideon.ai
+                {user?.email || ""}
               </p>
             </div>
           )}
@@ -166,21 +170,21 @@ export function DashboardSidebar() {
 
         {/* Sign Out */}
         {!isCollapsed ? (
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-1 text-[12.5px] font-medium text-red-400 hover:text-red-300 transition-colors"
+          <button
+            onClick={signOut}
+            className="flex items-center gap-2 px-1 text-[12.5px] font-medium text-red-400 hover:text-red-300 transition-colors w-full cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
-          </Link>
+          </button>
         ) : (
-          <Link
-            href="/login"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-white/[0.04] transition-colors"
+          <button
+            onClick={signOut}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-white/[0.04] transition-colors cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-3.5 h-3.5" />
-          </Link>
+          </button>
         )}
       </div>
     </aside>

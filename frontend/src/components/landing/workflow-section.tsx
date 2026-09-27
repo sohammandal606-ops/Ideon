@@ -123,7 +123,7 @@ function WorkflowChart() {
           y1={padding.top + (i / 4) * innerH}
           x2={chartWidth - padding.right}
           y2={padding.top + (i / 4) * innerH}
-          stroke="rgba(255,255,255,0.04)"
+          stroke="rgba(0,0,0,0.05)"
           strokeWidth="1"
         />
       ))}
@@ -172,7 +172,7 @@ function WorkflowChart() {
           <rect
             x={activeX + 12} y={padding.top + innerH * 0.5 + item.y - 8}
             width="70" height="16" rx="4"
-            fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.08)"
+            fill="rgba(0,0,0,0.6)" stroke="rgba(0,0,0,0.05)"
           />
           <circle cx={activeX + 20} cy={padding.top + innerH * 0.5 + item.y} r="3" fill={item.color} />
           <text x={activeX + 28} y={padding.top + innerH * 0.5 + item.y + 3} fill="#a1a1aa" fontSize="8">
@@ -195,12 +195,12 @@ function AgentStepList() {
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <p className="text-[13px] font-medium text-zinc-300 truncate">{agent.name}</p>
-              <span className="text-[11px] text-zinc-600 shrink-0 ml-2">
+              <p className="text-[13px] font-medium text-slate-700 truncate">{agent.name}</p>
+              <span className="text-[11px] text-slate-400 shrink-0 ml-2">
                 {i === 0 ? "100%" : i === 1 ? "80%" : i === 2 ? "60%" : "40%"}
               </span>
             </div>
-            <p className="text-[11px] text-zinc-600">{agent.duration}</p>
+            <p className="text-[11px] text-slate-400">{agent.duration}</p>
           </div>
         </div>
       ))}
@@ -227,14 +227,14 @@ export function WorkflowSection() {
           viewport={{ once: true }}
           className="text-center mb-10 sm:mb-12 md:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] mb-5">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 mb-5">
             <HexIcon className="w-3.5 h-3.5" />
-            <span className="text-[13px] text-zinc-500 font-medium">The Agent Pipeline</span>
+            <span className="text-[13px] text-slate-500 font-medium">The Agent Pipeline</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-semibold tracking-[-0.03em] mb-4">
             Your Work, Visualized Clearly
           </h2>
-          <p className="text-[14px] sm:text-[15px] text-zinc-500 max-w-[560px] mx-auto leading-[1.75] px-2">
+          <p className="text-[14px] sm:text-[15px] text-slate-500 max-w-[560px] mx-auto leading-[1.75] px-2">
             Watch 8 specialized AI agents analyze your startup in sequence—each building on the
             last to deliver a complete, evidence-backed strategy you can act on.
           </p>
@@ -244,12 +244,12 @@ export function WorkflowSection() {
         <div className="xl:hidden flex items-center justify-center gap-3 mb-5 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-1.5 glass-surface rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-            <span className="text-[12px] text-zinc-300 font-medium">Agent 1: Idea Validation</span>
+            <span className="text-[12px] text-slate-700 font-medium">Agent 1: Idea Validation</span>
             <span className="text-[11px] text-emerald-400 font-medium">✓</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 glass-surface rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse shrink-0" />
-            <span className="text-[12px] text-zinc-300 font-medium">Agent 4: Business Model</span>
+            <span className="text-[12px] text-slate-700 font-medium">Agent 4: Business Model</span>
             <span className="text-[11px] text-violet-400 font-medium">Running</span>
           </div>
         </div>
@@ -264,26 +264,26 @@ export function WorkflowSection() {
         >
           {/* Floating cards — only xl+ where there's enough room */}
           <div className="hidden xl:block absolute -left-52 top-1/2 -translate-y-1/2 z-10">
-            <div className="glass-surface rounded-xl p-4 w-[170px] shadow-xl border border-white/[0.08]">
+            <div className="glass-surface rounded-xl p-4 w-[170px] shadow-xl border border-slate-200">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Agent 1</p>
+                <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Agent 1</p>
               </div>
-              <p className="text-[13px] font-medium text-zinc-200 mb-1">Idea Validation</p>
-              <p className="text-[11px] text-zinc-500">Step 1 of 8</p>
+              <p className="text-[13px] font-medium text-slate-800 mb-1">Idea Validation</p>
+              <p className="text-[11px] text-slate-500">Step 1 of 8</p>
               <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1">
                 <span>✓</span> Complete
               </p>
             </div>
           </div>
           <div className="hidden xl:block absolute -right-52 top-1/2 -translate-y-1/2 z-10">
-            <div className="glass-surface rounded-xl p-4 w-[170px] shadow-xl border border-white/[0.08]">
+            <div className="glass-surface rounded-xl p-4 w-[170px] shadow-xl border border-slate-200">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Agent 4</p>
+                <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Agent 4</p>
               </div>
-              <p className="text-[13px] font-medium text-zinc-200 mb-1">Business Model</p>
-              <p className="text-[11px] text-zinc-500">Step 4 of 8</p>
+              <p className="text-[13px] font-medium text-slate-800 mb-1">Business Model</p>
+              <p className="text-[11px] text-slate-500">Step 4 of 8</p>
               <p className="text-[11px] text-violet-400 mt-2 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse inline-block" />
                 In Progress
@@ -292,17 +292,17 @@ export function WorkflowSection() {
           </div>
 
           {/* Main dashboard */}
-          <div className="glass-surface rounded-2xl overflow-hidden border-white/[0.08]">
+          <div className="glass-surface rounded-2xl overflow-hidden border-slate-200">
             <div className="grid lg:grid-cols-[220px_1fr]">
               {/* Sidebar — Agent Progress */}
-              <div className="border-b lg:border-b-0 lg:border-r border-white/[0.06] p-4 sm:p-6">
+              <div className="border-b lg:border-b-0 lg:border-r border-slate-200 p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-[13px] font-medium text-zinc-400">Agent Progress</p>
-                  <span className="text-[11px] text-zinc-600">Step 4/8</span>
+                  <p className="text-[13px] font-medium text-slate-600">Agent Progress</p>
+                  <span className="text-[11px] text-slate-400">Step 4/8</span>
                 </div>
                 <AgentStepList />
                 <Link href="/signup">
-                  <button className="w-full mt-5 h-9 text-[13px] font-medium rounded-lg border border-white/[0.12] text-white hover:bg-white/[0.05] transition-colors cursor-pointer">
+                  <button className="w-full mt-5 h-9 text-[13px] font-medium rounded-lg border border-slate-300 text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer">
                     Run Analysis
                   </button>
                 </Link>
@@ -318,7 +318,7 @@ export function WorkflowSection() {
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ backgroundColor: cat.color }}
                         />
-                        <span className="text-[11px] text-zinc-500">{cat.label}</span>
+                        <span className="text-[11px] text-slate-500">{cat.label}</span>
                       </div>
                     ))}
                   </div>
@@ -340,7 +340,7 @@ export function WorkflowSection() {
           <h3 className="text-xl sm:text-2xl font-semibold text-center mb-3 tracking-tight">
             How Our Agents Work Together
           </h3>
-          <p className="text-[13px] sm:text-[14px] text-zinc-500 text-center max-w-[640px] mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
+          <p className="text-[13px] sm:text-[14px] text-slate-500 text-center max-w-[640px] mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
             Each agent specializes in one domain. They share a common Startup State, so insights
             from market research inform financial projections, and competitor gaps shape your GTM
             strategy. The result: a coherent plan, not disconnected advice.
@@ -354,23 +354,23 @@ export function WorkflowSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="glass-surface rounded-xl p-4 sm:p-5 relative group hover:border-white/[0.12] transition-colors"
+                className="glass-surface rounded-xl p-4 sm:p-5 relative group hover:border-slate-300 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <span
-                    className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                    className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold text-slate-900 shrink-0"
                     style={{ backgroundColor: agent.color }}
                   >
                     {agent.step}
                   </span>
                   {agent.parallel && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-500">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-50 text-slate-500">
                       parallel
                     </span>
                   )}
                 </div>
-                <h4 className="text-[14px] font-semibold text-white mb-1.5">{agent.name}</h4>
-                <p className="text-[12px] text-zinc-500 leading-relaxed mb-3">
+                <h4 className="text-[14px] font-semibold text-slate-900 mb-1.5">{agent.name}</h4>
+                <p className="text-[12px] text-slate-500 leading-relaxed mb-3">
                   {agent.description}
                 </p>
                 <div className="flex items-center justify-between">
@@ -383,7 +383,7 @@ export function WorkflowSection() {
                   >
                     {agent.category}
                   </span>
-                  <span className="text-[10px] text-zinc-600">{agent.duration}</span>
+                  <span className="text-[10px] text-slate-400">{agent.duration}</span>
                 </div>
               </motion.div>
             ))}
@@ -391,7 +391,7 @@ export function WorkflowSection() {
 
           {/* Flow diagram */}
           <div className="mt-10 sm:mt-12 glass-surface rounded-xl p-5 sm:p-6 md:p-8">
-            <p className="text-[13px] font-medium text-zinc-400 mb-4 text-center">
+            <p className="text-[13px] font-medium text-slate-600 mb-4 text-center">
               Execution Flow
             </p>
             <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px]">
@@ -413,20 +413,20 @@ export function WorkflowSection() {
                 "Final Verdict",
               ].map((item, i) =>
                 item === "→" || item === "+" ? (
-                  <span key={i} className="text-zinc-600 font-mono">
+                  <span key={i} className="text-slate-400 font-mono">
                     {item}
                   </span>
                 ) : (
                   <span
                     key={i}
-                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-zinc-300"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700"
                   >
                     {item}
                   </span>
                 )
               )}
             </div>
-            <p className="text-[11px] sm:text-[12px] text-zinc-600 text-center mt-4">
+            <p className="text-[11px] sm:text-[12px] text-slate-400 text-center mt-4">
               Market Research and Competitor Analysis run in parallel, then merge into Business
               Model synthesis.
             </p>

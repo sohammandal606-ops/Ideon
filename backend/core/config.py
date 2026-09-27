@@ -18,10 +18,10 @@ class Settings(BaseSettings):
     SUPABASE_URL: AnyHttpUrl
     SUPABASE_SECRET_KEY: SecretStr
 
-    # Default / fallback LLM settings
-    MISTRAL_API_KEY: SecretStr | None = None
-    MISTRAL_MODEL: str = "mistral-small-latest"
-    MISTRAL_TEMPERATURE: float = 0.2
+    # LLM settings (optional until agents/workflows are active)
+    GROQ_API_KEY: SecretStr | None = None
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
+    GROQ_TEMPERATURE: float = 0.2
 
     # Per-Agent Mistral settings (Each agent can use its own API key & model)
     MISTRAL_API_KEY_IDEA_VALIDATOR: SecretStr | None = None

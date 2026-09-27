@@ -1,6 +1,21 @@
-"""DEPRECATED: LLM service is no longer used.
+"""Creates a ChatGroq instance using centralized settings.
 
-Each agent in workflows/agents/ now directly instantiates its own ChatMistralAI
-model using its own dedicated API key (e.g. MISTRAL_API_KEY_<AGENT_NAME>)
-configured in core.config.settings and .env.
+Depends on: core.config (GROQ_API_KEY, GROQ_MODEL, GROQ_TEMPERATURE)
+Used by:    agents, workflows (future)
 """
+
+from langchain_groq import ChatGroq
+
+from core.config import settings
+
+
+def get_llm() -> ChatGroq:
+    if settings.GROQ_API_KEY is None:
+        raise ValueError("GROQ_API_KEY is not configured.")
+
+    return ChatGroq(
+        model=settings.GROQ_MODEL,
+        temperature=settings.GROQ_TEMPERATURE,
+        max_retries=3,
+        api_key=settings.GROQ_API_KEY.get_secret_value(),
+    )
