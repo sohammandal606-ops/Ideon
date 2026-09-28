@@ -47,7 +47,6 @@ import {
   useProjectModal,
   StartupProject,
   AgentWorkflowOutput,
-  AgentWorkflowOutput,
 } from "@/context/project-modal-context";
 import { fetchApi } from "@/lib/api";
 
@@ -250,7 +249,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
   const handleCopySummary = () => {
     if (!project?.agentOutputs) return;
     navigator.clipboard.writeText(
-      `Project: ${project.name}\nViability Score: ${project.agentOutputs.final_verdict.viabilityScore}/100\nVerdict: ${project.agentOutputs.final_verdict.executiveSummary}`
+      `Project: ${project.name}\nViability Score: ${project.agentOutputs.final_verdict.overall_score}/100\nVerdict: ${project.agentOutputs.final_verdict.executive_summary}`
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -568,7 +567,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                       <span className="text-xs font-semibold text-white">4. Business Model</span>
                     </div>
                     <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
-                      {out.business_model.cost_structure[0]?.price || "SaaS"}
+                      {out.business_model.cost_structure[0] || "SaaS"}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed mb-2">
@@ -630,7 +629,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   </p>
                 </div>
                 <div className="pt-2.5 border-t border-white/[0.05] flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="truncate max-w-[170px]">{out.mvp_plan.success_metrics[0]?.goal}</span>
+                  <span className="truncate max-w-[170px]">{out.mvp_plan.success_metrics[0]}</span>
                   <span className="text-amber-400 font-medium group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </div>
@@ -1032,17 +1031,14 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {out.business_model.cost_structure.map((tier, idx) => (
+                    {out.business_model.cost_structure.map((cost, idx) => (
                       <div
                         key={idx}
                         className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-purple-500/50 transition-all flex flex-col justify-between backdrop-blur-md group hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
                       >
                         <div>
-                          <h4 className="text-sm font-bold text-white">{tier.tier}</h4>
-                          <div className="text-2xl font-extrabold text-blue-400 my-2.5">
-                            {tier.price}
-                          </div>
-                          <p className="text-xs text-zinc-400 leading-relaxed">{tier.description}</p>
+                          <h4 className="text-sm font-bold text-white">Cost driver {idx + 1}</h4>
+                          <p className="text-xs text-zinc-400 leading-relaxed mt-2">{cost}</p>
                         </div>
                       </div>
                     ))}
@@ -1115,17 +1111,17 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-white">4-Week Build Sprint Timeline</h3>
+                    <h3 className="text-sm font-bold text-white">Success Metrics</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-                      {out.mvp_plan.success_metrics.map((sprint, idx) => (
+                      {out.mvp_plan.success_metrics.map((metric, idx) => (
                         <div
                           key={idx}
                           className="p-4.5 rounded-xl bg-white/[0.03] border border-white/[0.07] space-y-2 backdrop-blur-sm"
                         >
                           <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">
-                            {sprint.week}
+                            Metric {idx + 1}
                           </span>
-                          <p className="text-xs text-zinc-300 leading-snug">{sprint.goal}</p>
+                          <p className="text-xs text-zinc-300 leading-snug">{metric}</p>
                         </div>
                       ))}
                     </div>
@@ -1355,7 +1351,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
               <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/60">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-xs text-violet-900">4. Business Model</span>
-                  <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{out.business_model.cost_structure[0]?.price}</span>
+                  <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{out.business_model.cost_structure[0]}</span>
                 </div>
                 <p className="text-[11px] text-zinc-700 leading-snug">{out.business_model.revenue_streams?.[0] || ''}</p>
                 <div className="text-[10px] text-zinc-500 mt-1">{out.business_model.pricing_strategy}</div>
@@ -1378,7 +1374,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">4 Weeks</span>
                 </div>
                 <p className="text-[11px] text-zinc-700 leading-snug">P0 Scope: {out.mvp_plan.core_features.join("; ")}</p>
-                <div className="text-[10px] text-zinc-500 mt-1">Sprint 1: {out.mvp_plan.success_metrics[0]?.goal}</div>
+                <div className="text-[10px] text-zinc-500 mt-1">Metric 1: {out.mvp_plan.success_metrics[0]}</div>
               </div>
 
               {/* Agent 7 Summary */}
