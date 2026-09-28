@@ -166,6 +166,13 @@ const AGENTS_CONFIG: AgentConfigItem[] = [
   },
 ];
 
+interface AnalysisRunData {
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  progress_percentage: number;
+  error_message: string | null;
+  final_state_snapshot: AgentWorkflowOutput | null;
+}
+
 export default function ProjectAnalysisPage({ params }: PageProps) {
   const unwrappedParams = use(params);
   const projectId = unwrappedParams.id;
@@ -178,36 +185,55 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [showSummaryMatrix, setShowSummaryMatrix] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    setAnalysisError(null);
+
     const fetchProjectData = async () => {
       const found = getStartup(projectId);
       if (found && found.agentOutputs) {
-        setProject(found);
+        if (isMounted) setProject(found);
         return;
       }
       
       try {
         const p = await fetchApi(`/startups/${projectId}`);
-        let agentOutputs = undefined;
+        let agentOutputs: AgentWorkflowOutput | undefined;
         let viabilityScore = undefined;
         let status: StartupProject["status"] = "Draft";
         let progress = 0;
+        let analysis: AnalysisRunData | null = null;
         
         try {
-          const analysis = await fetchApi(`/startups/${projectId}/analysis`);
-          if (analysis) {
-             progress = analysis.progress_percentage || 0;
-             if (analysis.status === "COMPLETED") {
-               status = "Validating";
-               agentOutputs = analysis.final_state_snapshot;
-               viabilityScore = agentOutputs?.final_verdict?.viabilityScore || agentOutputs?.final_verdict?.overall_score || undefined;
-             } else if (analysis.status === "IN_PROGRESS") {
-               status = "Validating";
-             }
+          analysis = await fetchApi(`/startups/${projectId}/analysis`);
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            error.message !== "No analysis found for this startup."
+          ) {
+            throw error;
           }
-        } catch(e) {
-          // Ignore analysis errors
+        }
+
+        if (analysis) {
+          progress = analysis.progress_percentage || 0;
+          if (analysis.status === "COMPLETED") {
+            status = "Validating";
+            agentOutputs = analysis.final_state_snapshot ?? undefined;
+            viabilityScore = agentOutputs?.final_verdict?.overall_score;
+          } else if (
+            analysis.status === "PENDING" ||
+            analysis.status === "IN_PROGRESS"
+          ) {
+            status = "Validating";
+          } else if (analysis.status === "FAILED") {
+            setAnalysisError(
+              analysis.error_message || "The analysis could not be completed.",
+            );
+          }
         }
         
         const accents = ["violet", "emerald", "amber", "blue"];
@@ -229,13 +255,30 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
           agentOutputs,
         };
         
-        setProject(fullProject);
+        if (isMounted) {
+          setProject(fullProject);
+          if (
+            analysis?.status === "PENDING" ||
+            analysis?.status === "IN_PROGRESS"
+          ) {
+            pollTimer = setTimeout(fetchProjectData, 4000);
+          }
+        }
       } catch (e) {
         console.error("Failed to load project", e);
+        if (isMounted) {
+          setAnalysisError(
+            e instanceof Error ? e.message : "Unable to load project analysis.",
+          );
+        }
       }
     };
     
     fetchProjectData();
+    return () => {
+      isMounted = false;
+      if (pollTimer) clearTimeout(pollTimer);
+    };
   }, [projectId, getStartup]);
 
   const handleDownloadPDF = () => {
@@ -266,9 +309,25 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
           </div>
           <div className="absolute inset-0 rounded-full blur-xl bg-purple-500/20" />
         </div>
-        <p className="text-sm font-medium tracking-wide text-zinc-300">
-          Synthesizing 8-Agent Neural Consensus...
-        </p>
+        {analysisError ? (
+          <div className="max-w-lg text-center space-y-2">
+            <p className="text-sm font-semibold text-red-300">
+              Analysis failed
+            </p>
+            <p className="text-sm text-zinc-400">{analysisError}</p>
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="text-sm text-blue-300 underline underline-offset-4"
+            >
+              Return to dashboard
+            </button>
+          </div>
+        ) : (
+          <p className="text-sm font-medium tracking-wide text-zinc-300">
+            Synthesizing 8-Agent Neural Consensus...
+          </p>
+        )}
       </div>
     );
   }

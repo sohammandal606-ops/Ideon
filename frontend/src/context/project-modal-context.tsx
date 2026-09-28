@@ -109,6 +109,8 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
                   viabilityScore = agentOutputs?.final_verdict?.viabilityScore || agentOutputs?.final_verdict?.overall_score || undefined;
                 } else if (analysis.status === "IN_PROGRESS") {
                   status = "Validating";
+                } else if (analysis.status === "PENDING") {
+                  status = "Validating";
                 }
               }
             } catch (e) {

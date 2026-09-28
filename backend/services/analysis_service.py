@@ -27,10 +27,12 @@ Architecture:
     Groq AI
 """
 
+import logging
 from uuid import UUID
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from db.connection import session_factory
 from db.models.analysis import AnalysisRun
 from db.repositories.analysis_repository import AnalysisRepository
 from db.repositories.startup_repository import StartupRepository
@@ -38,6 +40,8 @@ from schemas.analysis import (
     AnalysisStatus,
 )
 from workflows.workflow import startup_workflow
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisNotFoundError(Exception):
@@ -137,66 +141,105 @@ class AnalysisService:
             inputs_snapshot=inputs_snapshot,
         )
 
-        # Build initial LangGraph state
+        return analysis
 
-        initial_state = {
-            "startup_id": str(startup.id),
-            "startup_name": startup.name,
-            "description": startup.description,
-            "industry": startup.industry,
-            "target_market": startup.target_market,
-            "additional_info": startup.additional_info,
-            # Agent outputs
-            "idea_validation": None,
-            "market_research": None,
-            "competitor_analysis": None,
-            "business_model": None,
-            "financial_analysis": None,
-            "mvp_plan": None,
-            "gtm_strategy": None,
-            "final_verdict": None,
-            # Workflow tracking
-            "current_agent": None,
-            "progress_percentage": 0,
-        }
-        # Execute the LangGraph workflow
+    async def run_analysis(self, analysis_id: UUID) -> None:
+        """Run a queued analysis without holding a DB connection during AI calls."""
+        async with session_factory() as session:
+            analysis = await self.analysis_repository.get_by_id(session, analysis_id)
+            if not analysis:
+                logger.error("Cannot start missing analysis run %s", analysis_id)
+                return
+
+            startup = await self.startup_repository.get_by_id(
+                session,
+                analysis.startup_id,
+            )
+            if not startup:
+                await self.analysis_repository.mark_failed(
+                    session,
+                    analysis,
+                    "Startup not found when analysis began.",
+                )
+                return
+
+            inputs = analysis.inputs_snapshot
+            if inputs is None:
+                await self.analysis_repository.mark_failed(
+                    session,
+                    analysis,
+                    "Analysis inputs were not saved.",
+                )
+                return
+
+            initial_state = {
+                "startup_id": str(startup.id),
+                "startup_name": inputs.get("name", startup.name),
+                "description": inputs.get("description", startup.description),
+                "industry": inputs.get("industry", startup.industry),
+                "target_market": inputs.get("target_market", startup.target_market),
+                "additional_info": inputs.get(
+                    "additional_info",
+                    startup.additional_info,
+                ),
+                "idea_validation": None,
+                "market_research": None,
+                "competitor_analysis": None,
+                "business_model": None,
+                "financial_analysis": None,
+                "mvp_plan": None,
+                "gtm_strategy": None,
+                "final_verdict": None,
+                "current_agent": None,
+                "progress_percentage": 0,
+            }
+
+            try:
+                await self.analysis_repository.mark_in_progress(
+                    session=session,
+                    analysis=analysis,
+                )
+            except Exception as exc:
+                logger.exception("Could not initialize analysis run %s", analysis_id)
+                await self.analysis_repository.mark_failed(
+                    session=session,
+                    analysis=analysis,
+                    error_message=str(exc),
+                )
+                return
 
         try:
-            await self.analysis_repository.mark_in_progress(
-                session=session,
-                analysis=analysis,
-            )
-
             final_state = await self._run_workflow(initial_state)
-
-            # Save the final workflow state
-
-            await self.analysis_repository.mark_completed(
-                session=session,
-                analysis=analysis,
-                final_state_snapshot=final_state,
-            )
-
         except Exception as exc:
-            # Save failure info
-
-            await self.analysis_repository.mark_failed(
-                session=session,
-                analysis=analysis,
-                error_message=str(exc),
-            )
-
-        # Return the updated analysis
-
-        updated_analysis = await self.analysis_repository.get_by_id(
-            session,
-            analysis.id,
-        )
-
-        if not updated_analysis:
-            raise AnalysisNotFoundError("Analysis run not found after creation")
-
-        return updated_analysis
+            logger.exception("Analysis run %s failed", analysis_id)
+            async with session_factory() as session:
+                analysis = await self.analysis_repository.get_by_id(
+                    session,
+                    analysis_id,
+                )
+                if analysis:
+                    await self.analysis_repository.mark_failed(
+                        session=session,
+                        analysis=analysis,
+                        error_message=str(exc),
+                    )
+        else:
+            async with session_factory() as session:
+                analysis = await self.analysis_repository.get_by_id(
+                    session,
+                    analysis_id,
+                )
+                if not analysis:
+                    logger.error(
+                        "Analysis run %s disappeared before completion",
+                        analysis_id,
+                    )
+                    return
+                await self.analysis_repository.mark_completed(
+                    session=session,
+                    analysis=analysis,
+                    final_state_snapshot=final_state,
+                )
 
     # langgraph workflow...
 

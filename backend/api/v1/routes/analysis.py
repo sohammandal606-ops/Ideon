@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
 from api.v1.deps import DatabaseSession, get_current_db_user
 from db.models.user import User
@@ -39,6 +39,7 @@ InjectedAnalysisService = Annotated[AnalysisService, Depends(get_analysis_servic
 async def start_analysis(
     startup_id: UUID,
     analysis_data: AnalysisRunCreate,
+    background_tasks: BackgroundTasks,
     session: DatabaseSession,
     db_user: CurrentDBUser,
     analysis_service: InjectedAnalysisService,
@@ -48,27 +49,29 @@ async def start_analysis(
     """
 
     try:
-        return await analysis_service.start_analysis(
+        analysis = await analysis_service.start_analysis(
             session=session,
             startup_id=startup_id,
             user_id=db_user.id,
             force_re_run=analysis_data.force_re_run,
         )
+        background_tasks.add_task(analysis_service.run_analysis, analysis.id)
+        return analysis
     except StartupNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Startup not found or does not belong to you.",
-        )
+        ) from None
     except AnalysisAlreadyRunningError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An analysis is already running for this startup.",
-        )
+        ) from None
     except AnalysisAlreadyExistsError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Analysis already exists. Use force_re_run=true to run again.",
-        )
+        ) from None
 
 
 # --- Get Latest Analysis ---
@@ -99,12 +102,12 @@ async def get_latest_analysis(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Startup not found or does not belong to you.",
-        )
+        ) from None
     except AnalysisNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No analysis found for this startup.",
-        )
+        ) from None
 
 
 # --- Get Specific Analysis Run ---
@@ -137,9 +140,9 @@ async def get_analysis_run(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Startup not found or does not belong to you.",
-        )
+        ) from None
     except AnalysisNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Analysis run not found.",
-        )
+        ) from None
