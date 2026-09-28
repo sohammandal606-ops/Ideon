@@ -8,7 +8,22 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     throw new Error("NEXT_PUBLIC_API_URL is not configured");
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
+  let session;
+  try {
+    const result = await supabase.auth.getSession();
+    if (result.error) {
+      throw new Error(`Unable to read your sign-in session: ${result.error.message}`);
+    }
+    session = result.data.session;
+  } catch (error) {
+    if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
+      throw new Error(
+        "Could not reach Supabase Auth to check your sign-in session. Check your connection, then sign in again.",
+      );
+    }
+    throw error;
+  }
+
   const token = session?.access_token;
 
   const headers = new Headers(options.headers);
@@ -28,10 +43,21 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     ? endpoint
     : `/${endpoint}`;
 
-  const response = await fetch(`${versionedBaseUrl}${normalizedEndpoint}`, {
-    ...options,
-    headers,
-  });
+  const requestUrl = `${versionedBaseUrl}${normalizedEndpoint}`;
+  let response: Response;
+  try {
+    response = await fetch(requestUrl, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
+      throw new Error(
+        `Could not reach the API at ${new URL(requestUrl).origin}. The service may be unavailable, or the browser may be blocking the request (CORS).`,
+      );
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
