@@ -43,7 +43,7 @@ export function TestimonialsSection() {
   const next = () => setActive((a) => (a === TESTIMONIALS.length - 1 ? 0 : a + 1));
 
   return (
-    <section id="product" className="px-4 md:px-8 py-20 md:py-28">
+    <section id="testimonials" className="scroll-mt-24 content-auto px-4 md:px-8 py-20 md:py-28">
       <div className="max-w-6xl mx-auto">
         {/* Header row */}
         <div className="grid md:grid-cols-2 gap-8 md:gap-16 mb-12">

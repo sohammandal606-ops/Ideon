@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function LandingFooter() {
   return (
-    <footer id="company" className="relative border-t border-slate-200">
+    <footer id="company" className="scroll-mt-24 relative border-t border-white/[0.08]">
       <div
         className="absolute bottom-0 left-0 w-[400px] h-[300px] pointer-events-none"
         style={{

@@ -210,7 +210,7 @@ function AgentStepList() {
 
 export function WorkflowSection() {
   return (
-    <section id="workflow" className="px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-28 relative">
+    <section id="workflow" className="scroll-mt-24 content-auto px-4 sm:px-6 md:px-8 py-16 sm:py-20 md:py-28 relative">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{

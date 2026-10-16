@@ -4,6 +4,7 @@ import { UsersSection } from "@/components/landing/users-section";
 import { WorkflowSection } from "@/components/landing/workflow-section";
 import { TestimonialsSection } from "@/components/landing/testimonials-section";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import { BackToTop } from "@/components/ui/back-to-top";
 
 export default function LandingPage() {
   return (
@@ -31,6 +32,7 @@ export default function LandingPage() {
         </main>
 
         <LandingFooter />
+        <BackToTop />
       </div>
     </div>
   );

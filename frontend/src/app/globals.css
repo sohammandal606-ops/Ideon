@@ -279,6 +279,11 @@
     overscroll-behavior-y: none;
   }
 
+  /* Prevent sticky navbar from covering section titles on jump */
+  section[id], footer[id] {
+    scroll-margin-top: 5.5rem;
+  }
+
   /* Lazy rendering off-screen landing sections */
   .content-auto {
     content-visibility: auto;
