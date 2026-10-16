@@ -1,8 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from core.config import settings
+from services.llm_service import get_agent_llm
 from workflows.state import StartupState
 from workflows.utils import run_research_agent
 
@@ -26,28 +25,7 @@ async def gtm_strategy_node(state: StartupState) -> dict:
     """
     Formulates a Go-To-Market strategy using live web search.
     """
-    api_key = (
-        settings.MISTRAL_API_KEY_GTM_STRATEGY.get_secret_value()
-        if settings.MISTRAL_API_KEY_GTM_STRATEGY
-        else (
-            settings.MISTRAL_API_KEY.get_secret_value()
-            if settings.MISTRAL_API_KEY
-            else None
-        )
-    )
-    if not api_key:
-        raise ValueError(
-            "MISTRAL_API_KEY_GTM_STRATEGY (or MISTRAL_API_KEY) is not configured."
-        )
-
-    llm = ChatMistralAI(
-        model=settings.MISTRAL_MODEL_GTM_STRATEGY or settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE_GTM_STRATEGY
-        if settings.MISTRAL_TEMPERATURE_GTM_STRATEGY is not None
-        else settings.MISTRAL_TEMPERATURE,
-        max_retries=3,
-        api_key=api_key,
-    )
+    llm = get_agent_llm("GTM_STRATEGY")
 
     # 1. Live Web Research Phase
     research_prompt = (
@@ -65,9 +43,10 @@ async def gtm_strategy_node(state: StartupState) -> dict:
         [
             (
                 "system",
-                "You are a brilliant Growth Hacker and CMO. "
-                "Design a scrappy, effective Go-To-Market (GTM) strategy using the provided research. "
-                "CRITICAL: You must explicitly output a valid JSON containing ALL four fields: launch_channels, marketing_tactics, customer_acquisition_cost_estimate, and early_adopter_profile.",
+                "You are a Growth Hacker. Design a lean GTM strategy. "
+                "Output ONLY a JSON with: launch_channels (max 4 items, short strings), "
+                "marketing_tactics (max 4 items, short strings), "
+                "customer_acquisition_cost_estimate (1 sentence), early_adopter_profile (1-2 sentences).",
             ),
             (
                 "user",

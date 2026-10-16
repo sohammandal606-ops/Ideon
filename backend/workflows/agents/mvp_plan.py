@@ -1,8 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from core.config import settings
+from services.llm_service import get_agent_llm
 from workflows.state import StartupState
 
 
@@ -25,36 +24,16 @@ async def mvp_plan_node(state: StartupState) -> dict:
     """
     Defines the Minimum Viable Product plan with full business context.
     """
-    api_key = (
-        settings.MISTRAL_API_KEY_MVP_PLAN.get_secret_value()
-        if settings.MISTRAL_API_KEY_MVP_PLAN
-        else (
-            settings.MISTRAL_API_KEY.get_secret_value()
-            if settings.MISTRAL_API_KEY
-            else None
-        )
-    )
-    if not api_key:
-        raise ValueError(
-            "MISTRAL_API_KEY_MVP_PLAN (or MISTRAL_API_KEY) is not configured."
-        )
-
-    llm = ChatMistralAI(
-        model=settings.MISTRAL_MODEL_MVP_PLAN or settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE_MVP_PLAN
-        if settings.MISTRAL_TEMPERATURE_MVP_PLAN is not None
-        else settings.MISTRAL_TEMPERATURE,
-        max_retries=3,
-        api_key=api_key,
-    )
+    llm = get_agent_llm("MVP_PLAN")
 
     prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
-                "You are an expert CTO and product manager. "
-                "Design a lean and pragmatic MVP (Minimum Viable Product) taking into account the business model and competitors. "
-                "CRITICAL: You must explicitly output a valid JSON containing ALL four fields: core_features, tech_stack_recommendation, development_timeline, and success_metrics.",
+                "You are an expert CTO. Design a lean MVP. "
+                "Output ONLY a JSON with: core_features (max 4 items, short strings), "
+                "tech_stack_recommendation (max 5 items, short strings), "
+                "development_timeline (1 sentence), success_metrics (max 4 items, short strings).",
             ),
             (
                 "user",

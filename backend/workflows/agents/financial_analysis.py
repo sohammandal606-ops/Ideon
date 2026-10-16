@@ -1,8 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from core.config import settings
+from services.llm_service import get_agent_llm
 from workflows.state import StartupState
 from workflows.utils import run_research_agent
 
@@ -26,28 +25,7 @@ async def financial_analysis_node(state: StartupState) -> dict:
     """
     Generates a high-level financial analysis using web data.
     """
-    api_key = (
-        settings.MISTRAL_API_KEY_FINANCIAL_ANALYSIS.get_secret_value()
-        if settings.MISTRAL_API_KEY_FINANCIAL_ANALYSIS
-        else (
-            settings.MISTRAL_API_KEY.get_secret_value()
-            if settings.MISTRAL_API_KEY
-            else None
-        )
-    )
-    if not api_key:
-        raise ValueError(
-            "MISTRAL_API_KEY_FINANCIAL_ANALYSIS (or MISTRAL_API_KEY) is not configured."
-        )
-
-    llm = ChatMistralAI(
-        model=settings.MISTRAL_MODEL_FINANCIAL_ANALYSIS or settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE_FINANCIAL_ANALYSIS
-        if settings.MISTRAL_TEMPERATURE_FINANCIAL_ANALYSIS is not None
-        else settings.MISTRAL_TEMPERATURE,
-        max_retries=3,
-        api_key=api_key,
-    )
+    llm = get_agent_llm("FINANCIAL_ANALYSIS")
 
     # 1. Live Web Research Phase
     research_prompt = (

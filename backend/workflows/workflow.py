@@ -1,3 +1,5 @@
+import asyncio
+
 from langgraph.graph import END, StateGraph
 
 from workflows.agents import (
@@ -12,22 +14,38 @@ from workflows.agents import (
 )
 from workflows.state import StartupState
 
+# Groq free-tier OTPM limit: 1000 tokens/minute
+# We add a delay between heavy agents to let the rate limit window reset.
+_INTER_AGENT_DELAY = 8  # seconds
+
+
+def _with_delay(agent_fn, delay: int = _INTER_AGENT_DELAY):
+    """Wraps an async agent node to add a short delay before execution."""
+
+    async def wrapper(state: StartupState) -> dict:
+        await asyncio.sleep(delay)
+        return await agent_fn(state)
+
+    wrapper.__name__ = agent_fn.__name__
+    return wrapper
+
 
 def create_workflow():
     """
     Creates and compiles the IDEON LangGraph workflow.
+    Inter-agent delays prevent hitting Groq's OTPM rate limits.
     """
     workflow = StateGraph(StartupState)
 
-    # Add nodes
+    # Add nodes — all but the first use a delay wrapper
     workflow.add_node("idea_validator", idea_validator_node)
-    workflow.add_node("market_research", market_research_node)
-    workflow.add_node("competitor_analysis", competitor_analysis_node)
-    workflow.add_node("business_model", business_model_node)
-    workflow.add_node("financial_analysis", financial_analysis_node)
-    workflow.add_node("mvp_plan", mvp_plan_node)
-    workflow.add_node("gtm_strategy", gtm_strategy_node)
-    workflow.add_node("final_verdict", final_verdict_node)
+    workflow.add_node("market_research", _with_delay(market_research_node))
+    workflow.add_node("competitor_analysis", _with_delay(competitor_analysis_node))
+    workflow.add_node("business_model", _with_delay(business_model_node))
+    workflow.add_node("financial_analysis", _with_delay(financial_analysis_node))
+    workflow.add_node("mvp_plan", _with_delay(mvp_plan_node))
+    workflow.add_node("gtm_strategy", _with_delay(gtm_strategy_node))
+    workflow.add_node("final_verdict", _with_delay(final_verdict_node))
 
     # Define execution order (Edges)
     workflow.set_entry_point("idea_validator")

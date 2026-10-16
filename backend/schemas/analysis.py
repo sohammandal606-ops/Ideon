@@ -60,7 +60,7 @@ class AnalysisRunResponse(BaseModel):
     status: AnalysisStatus
 
     # Currently executing agent
-    current_agent: AnalysisAgent | None = None
+    current_agent: str | None = None
 
     # Overall workflow progress
     progress_percentage: int = Field(

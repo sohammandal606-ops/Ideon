@@ -209,7 +209,7 @@ class AnalysisService:
                 return
 
         try:
-            final_state = await self._run_workflow(initial_state)
+            final_state = await self._run_workflow(initial_state, analysis_id=analysis_id)
         except Exception as exc:
             logger.exception("Analysis run %s failed", analysis_id)
             async with session_factory() as session:
@@ -246,43 +246,36 @@ class AnalysisService:
     async def _run_workflow(
         self,
         initial_state: dict,
+        analysis_id: UUID | None = None,
     ) -> dict:
         """
         Execute the IDEON LangGraph workflow.
-
-        Agent flow:
-
-            Idea Validator
-                    ↓
-             ┌──────┴──────┐
-             ↓             ↓
-        Market Research  Competitor
-             ↓             ↓
-             └──────┬──────┘
-                    ↓
-             Business Model
-                    ↓
-             Financial Analysis
-                    ↓
-                MVP Planner
-                    ↓
-                GTM Strategy
-                    ↓
-                Final Verdict
+        Streams each agent node output and updates progress.
         """
+        accumulated_state = dict(initial_state)
 
-        # If  LangGraph workflow is synchronous:
-        #
-        # final_state = startup_workflow.invoke(
-        #     initial_state
-        # )
-        #
-        # If your workflow is asynchronous:
-        # use ainvoke().
+        async for output in startup_workflow.astream(initial_state):
+            for node_name, state_update in output.items():
+                accumulated_state.update(state_update)
+                if analysis_id:
+                    current_agent = state_update.get("current_agent")
+                    progress_pct = state_update.get("progress_percentage", 0)
+                    try:
+                        async with session_factory() as session:
+                            analysis = await self.analysis_repository.get_by_id(
+                                session, analysis_id
+                            )
+                            if analysis:
+                                await self.analysis_repository.update_progress(
+                                    session=session,
+                                    analysis=analysis,
+                                    current_agent=current_agent,
+                                    progress_percentage=progress_pct,
+                                )
+                    except Exception as err:
+                        logger.warning("Could not update progress in DB: %s", err)
 
-        final_state = await startup_workflow.ainvoke(initial_state)
-
-        return final_state
+        return accumulated_state
 
     # get latest analysis...
 

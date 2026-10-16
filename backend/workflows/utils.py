@@ -1,8 +1,8 @@
 from langchain.agents import create_agent
-from langchain_mistralai import ChatMistralAI
 from langchain_tavily import TavilySearch
 
 from core.config import settings
+from services.llm_service import get_agent_llm
 
 
 async def run_research_agent(research_prompt: str) -> str:
@@ -10,29 +10,18 @@ async def run_research_agent(research_prompt: str) -> str:
     Spins up a ReAct agent equipped with Tavily to perform live web research.
     Returns the final synthesized research notes.
     """
-    api_key = (
-        settings.MISTRAL_API_KEY_RESEARCH.get_secret_value()
-        if settings.MISTRAL_API_KEY_RESEARCH
-        else (
-            settings.MISTRAL_API_KEY.get_secret_value()
-            if settings.MISTRAL_API_KEY
-            else None
-        )
-    )
-    if not api_key:
-        raise ValueError(
-            "MISTRAL_API_KEY_RESEARCH (or MISTRAL_API_KEY) is not configured."
-        )
+    llm = get_agent_llm("RESEARCH")
 
-    llm = ChatMistralAI(
-        model=settings.MISTRAL_MODEL_RESEARCH or settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE_RESEARCH
-        if settings.MISTRAL_TEMPERATURE_RESEARCH is not None
-        else settings.MISTRAL_TEMPERATURE,
-        max_retries=3,
-        api_key=api_key,
+    tavily_key = (
+        settings.TAVILY_API_KEY.get_secret_value()
+        if settings.TAVILY_API_KEY
+        else None
     )
-    search = TavilySearch(max_results=3)
+    if tavily_key:
+        search = TavilySearch(max_results=3, api_key=tavily_key)
+    else:
+        search = TavilySearch(max_results=3)
+
     tools = [search]
 
     system_message = (

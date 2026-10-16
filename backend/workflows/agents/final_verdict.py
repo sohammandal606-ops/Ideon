@@ -1,8 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel, Field
 
-from core.config import settings
+from services.llm_service import get_agent_llm
 from workflows.state import StartupState
 
 
@@ -29,37 +28,16 @@ async def final_verdict_node(state: StartupState) -> dict:
     Provides the final executive summary and go/no-go decision
     based on the COMPLETE dossier from all previous agents.
     """
-    api_key = (
-        settings.MISTRAL_API_KEY_FINAL_VERDICT.get_secret_value()
-        if settings.MISTRAL_API_KEY_FINAL_VERDICT
-        else (
-            settings.MISTRAL_API_KEY.get_secret_value()
-            if settings.MISTRAL_API_KEY
-            else None
-        )
-    )
-    if not api_key:
-        raise ValueError(
-            "MISTRAL_API_KEY_FINAL_VERDICT (or MISTRAL_API_KEY) is not configured."
-        )
-
-    llm = ChatMistralAI(
-        model=settings.MISTRAL_MODEL_FINAL_VERDICT or settings.MISTRAL_MODEL,
-        temperature=settings.MISTRAL_TEMPERATURE_FINAL_VERDICT
-        if settings.MISTRAL_TEMPERATURE_FINAL_VERDICT is not None
-        else settings.MISTRAL_TEMPERATURE,
-        max_retries=3,
-        api_key=api_key,
-    )
+    llm = get_agent_llm("FINAL_VERDICT")
 
     prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
-                "You are the Lead Partner at a top tier Venture Capital firm. "
-                "You are reviewing the complete dossier on a startup idea to make a final investment decision. "
-                "CRITICAL: You must explicitly output a valid JSON containing ALL five fields: "
-                "overall_score, executive_summary, go_no_go_decision, top_3_risks, and next_steps.",
+                "You are a VC partner making a final investment decision. "
+                "Output ONLY a JSON with: overall_score (int 1-100), "
+                "executive_summary (2-3 sentences max), go_no_go_decision (bool), "
+                "top_3_risks (exactly 3 short strings), next_steps (exactly 3 short strings).",
             ),
             (
                 "user",

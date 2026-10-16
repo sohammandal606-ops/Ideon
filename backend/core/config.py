@@ -18,10 +18,53 @@ class Settings(BaseSettings):
     SUPABASE_URL: AnyHttpUrl
     SUPABASE_SECRET_KEY: SecretStr
 
-    # LLM settings (optional until agents/workflows are active)
+    # LLM settings
     GROQ_API_KEY: SecretStr | None = None
-    GROQ_MODEL: str = "openai/gpt-oss-20b"
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"
     GROQ_TEMPERATURE: float = 0.2
+    TAVILY_API_KEY: SecretStr | None = None
+
+    # Mistral settings (fallback / backwards compatibility)
+    MISTRAL_API_KEY: SecretStr | None = None
+    MISTRAL_MODEL: str | None = None
+    MISTRAL_TEMPERATURE: float = 0.2
+
+    # Per-Agent Groq settings
+    GROQ_API_KEY_IDEA_VALIDATOR: SecretStr | None = None
+    GROQ_MODEL_IDEA_VALIDATOR: str | None = None
+    GROQ_TEMPERATURE_IDEA_VALIDATOR: float | None = None
+
+    GROQ_API_KEY_MARKET_RESEARCH: SecretStr | None = None
+    GROQ_MODEL_MARKET_RESEARCH: str | None = None
+    GROQ_TEMPERATURE_MARKET_RESEARCH: float | None = None
+
+    GROQ_API_KEY_COMPETITOR_ANALYSIS: SecretStr | None = None
+    GROQ_MODEL_COMPETITOR_ANALYSIS: str | None = None
+    GROQ_TEMPERATURE_COMPETITOR_ANALYSIS: float | None = None
+
+    GROQ_API_KEY_BUSINESS_MODEL: SecretStr | None = None
+    GROQ_MODEL_BUSINESS_MODEL: str | None = None
+    GROQ_TEMPERATURE_BUSINESS_MODEL: float | None = None
+
+    GROQ_API_KEY_FINANCIAL_ANALYSIS: SecretStr | None = None
+    GROQ_MODEL_FINANCIAL_ANALYSIS: str | None = None
+    GROQ_TEMPERATURE_FINANCIAL_ANALYSIS: float | None = None
+
+    GROQ_API_KEY_MVP_PLAN: SecretStr | None = None
+    GROQ_MODEL_MVP_PLAN: str | None = None
+    GROQ_TEMPERATURE_MVP_PLAN: float | None = None
+
+    GROQ_API_KEY_GTM_STRATEGY: SecretStr | None = None
+    GROQ_MODEL_GTM_STRATEGY: str | None = None
+    GROQ_TEMPERATURE_GTM_STRATEGY: float | None = None
+
+    GROQ_API_KEY_FINAL_VERDICT: SecretStr | None = None
+    GROQ_MODEL_FINAL_VERDICT: str | None = None
+    GROQ_TEMPERATURE_FINAL_VERDICT: float | None = None
+
+    GROQ_API_KEY_RESEARCH: SecretStr | None = None
+    GROQ_MODEL_RESEARCH: str | None = None
+    GROQ_TEMPERATURE_RESEARCH: float | None = None
 
     # Per-Agent Mistral settings (Each agent can use its own API key & model)
     MISTRAL_API_KEY_IDEA_VALIDATOR: SecretStr | None = None
