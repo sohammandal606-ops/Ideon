@@ -272,4 +272,23 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Smooth scrolling optimizations */
+  html {
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+  }
+
+  /* Lazy rendering off-screen landing sections */
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 700px;
+  }
+
+  /* Hardware acceleration utility for scroll/motion items */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
 }
