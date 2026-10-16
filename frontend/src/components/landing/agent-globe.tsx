@@ -139,20 +139,38 @@ export function AgentGlobeVisual() {
     return { projected, wireframe };
   }, [spherePoints, frame, cx, cy, nodeScale]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isVisibleRef = useRef(true);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mounted]);
+
   useEffect(() => {
     let id: number;
     const animate = () => {
-      if (!dragging.current) {
-        rotY.current += velX.current;
-        rotX.current += velY.current;
-        rotX.current = Math.max(-1.1, Math.min(1.1, rotX.current));
-        velX.current *= 0.985;
-        velY.current *= 0.985;
-        if (Math.abs(velX.current) < 0.001 && Math.abs(velY.current) < 0.0001) {
-          velX.current = 0.003;
+      if (isVisibleRef.current) {
+        if (!dragging.current) {
+          rotY.current += velX.current;
+          rotX.current += velY.current;
+          rotX.current = Math.max(-1.1, Math.min(1.1, rotX.current));
+          velX.current *= 0.985;
+          velY.current *= 0.985;
+          if (Math.abs(velX.current) < 0.001 && Math.abs(velY.current) < 0.0001) {
+            velX.current = 0.003;
+          }
         }
+        setFrame((f) => f + 1);
       }
-      setFrame((f) => f + 1);
       id = requestAnimationFrame(animate);
     };
     id = requestAnimationFrame(animate);
@@ -195,12 +213,16 @@ export function AgentGlobeVisual() {
 
   return (
     <div
-      className="relative w-full h-full min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center select-none touch-none"
+      ref={containerRef}
+      className="relative w-full h-full min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center select-none touch-none gpu-accelerated"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      style={{
+        cursor: isDragging ? "grabbing" : "grab",
+        transform: "translateZ(0)",
+      }}
     >
       {/* Ambient glow */}
       <div

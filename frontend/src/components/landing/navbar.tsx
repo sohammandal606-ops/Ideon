@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { IdeonLogo } from "./hex-icon";
 import { Menu, X } from "lucide-react";
+import { useLenis } from "lenis/react";
+import { motion, useScroll } from "framer-motion";
 
 const NAV_LINKS = [
   { label: "Product", href: "#product" },
@@ -16,49 +18,45 @@ export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState("product");
 
+  const { scrollYProgress } = useScroll();
+  const lenis = useLenis();
+
+  // Smooth navbar background and hide/show in sync with Lenis loop
+  useLenis(({ scroll, direction }) => {
+    setScrolled(scroll > 20);
+    if (scroll > 120 && direction === 1 && !mobileOpen) {
+      setHidden(true);
+    } else if (direction === -1 || scroll <= 120) {
+      setHidden(false);
+    }
+  });
+
+  // Zero-layout-thrashing scrollspy using native browser IntersectionObserver
   useEffect(() => {
-    let lastY = window.scrollY;
-
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      
-      // Update scroll progress (0 - 100)
-      if (docHeight > 0) {
-        setScrollProgress(Math.min(100, Math.max(0, (currentY / docHeight) * 100)));
-      }
-
-      // Background styling threshold
-      setScrolled(currentY > 20);
-
-      // Smart navbar hide on scroll down, show on scroll up
-      if (currentY > 120 && currentY > lastY && !mobileOpen) {
-        setHidden(true);
-      } else {
-        setHidden(false);
-      }
-      lastY = currentY;
-
-      // Scrollspy active section detection
-      const sections = ["product", "features", "workflow", "company"];
-      for (const sectionId of sections) {
-        const el = document.getElementById(sectionId);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= 200 && rect.bottom >= 150) {
-            setActiveSection(sectionId);
-            break;
+    const sections = ["product", "features", "workflow", "company"];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
           }
         }
+      },
+      {
+        rootMargin: "-20% 0px -60% 0px",
+        threshold: 0,
       }
-    };
+    );
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [mobileOpen]);
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Close mobile menu on resize
   useEffect(() => {
@@ -71,11 +69,13 @@ export function LandingNavbar() {
     if (href.startsWith("#")) {
       e.preventDefault();
       const targetId = href.replace("#", "");
-      const targetEl = document.getElementById(targetId);
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "smooth" });
-        setActiveSection(targetId);
+      if (lenis) {
+        lenis.scrollTo(href, { offset: -80 });
+      } else {
+        const targetEl = document.getElementById(targetId);
+        targetEl?.scrollIntoView({ behavior: "smooth" });
       }
+      setActiveSection(targetId);
       setMobileOpen(false);
     }
   };
@@ -87,11 +87,11 @@ export function LandingNavbar() {
           hidden && !mobileOpen ? "-translate-y-full" : "translate-y-0"
         }`}
       >
-        {/* Scroll Progress Bar */}
+        {/* Scroll Progress Bar — GPU compositor accelerated scaleX */}
         <div className="w-full h-[2px] bg-white/[0.05] relative overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-fuchsia-500 transition-all duration-150 ease-out"
-            style={{ width: `${scrollProgress}%` }}
+          <motion.div
+            className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-fuchsia-500 origin-left"
+            style={{ scaleX: scrollYProgress }}
           />
         </div>
 
