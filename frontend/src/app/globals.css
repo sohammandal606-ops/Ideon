@@ -295,8 +295,10 @@
     pointer-events: none;
   }
 
-  html {
-    overscroll-behavior-y: none;
+  @media (hover: hover) and (pointer: fine) {
+    html {
+      overscroll-behavior-y: none;
+    }
   }
 
   /* Prevent sticky navbar from covering section titles on jump */

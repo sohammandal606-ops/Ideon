@@ -8,7 +8,7 @@ import { BackToTop } from "@/components/ui/back-to-top";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col relative overflow-x-clip font-sans">
       {/* Ambient background glow */}
       <div
         className="absolute pointer-events-none inset-0"

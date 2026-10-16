@@ -178,6 +178,8 @@ export function AgentGlobeVisual() {
   }, []);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only capture drag on desktop mouse; let mobile touch scroll smoothly
+    if (e.pointerType !== "mouse") return;
     dragging.current = true;
     setIsDragging(true);
     lastPointer.current = { x: e.clientX, y: e.clientY };
@@ -202,19 +204,21 @@ export function AgentGlobeVisual() {
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = false;
     setIsDragging(false);
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   };
 
   if (!mounted) {
     return (
-      <div className="relative w-full h-full min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center select-none touch-none" />
+      <div className="relative w-full h-full min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center select-none touch-pan-y md:touch-none" />
     );
   }
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center select-none touch-none gpu-accelerated"
+      className="relative w-full h-full min-h-[360px] md:min-h-[440px] flex flex-col items-center justify-center select-none touch-pan-y md:touch-none gpu-accelerated"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -251,8 +255,7 @@ export function AgentGlobeVisual() {
 
       <svg
         viewBox={`0 0 ${size} ${size}`}
-        className="relative w-[min(100%,340px)] h-auto"
-        style={{ filter: "drop-shadow(0 0 40px rgba(139,92,246,0.2))" }}
+        className="relative w-[min(100%,340px)] h-auto md:drop-shadow-[0_0_40px_rgba(139,92,246,0.2)]"
       >
         <defs>
           <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
