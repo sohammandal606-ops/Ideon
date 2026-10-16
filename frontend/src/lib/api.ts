@@ -24,7 +24,20 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     throw error;
   }
 
-  const token = session?.access_token;
+  let token = session?.access_token;
+
+  // If token is expired or expiring within 30 seconds, refresh before sending
+  if (session?.expires_at && session.expires_at * 1000 <= Date.now() + 30000) {
+    try {
+      const refreshResult = await supabase.auth.refreshSession();
+      if (!refreshResult.error && refreshResult.data.session) {
+        session = refreshResult.data.session;
+        token = session.access_token;
+      }
+    } catch {
+      // If proactive refresh fails, attempt request with current token
+    }
+  }
 
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type")) {
@@ -57,6 +70,29 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
       );
     }
     throw error;
+  }
+
+  // If unauthorized and we had a token, try refreshing session and retrying once
+  if (response.status === 401 && token) {
+    try {
+      const refreshResult = await supabase.auth.refreshSession();
+      const newToken = refreshResult.data.session?.access_token;
+      if (!refreshResult.error && newToken) {
+        const retryHeaders = new Headers(headers);
+        retryHeaders.set("Authorization", `Bearer ${newToken}`);
+        const retryResponse = await fetch(requestUrl, {
+          ...options,
+          headers: retryHeaders,
+        });
+        if (retryResponse.ok) {
+          if (retryResponse.status === 204) return null;
+          return retryResponse.json();
+        }
+        response = retryResponse;
+      }
+    } catch {
+      // If refresh fails, continue to error parsing below
+    }
   }
 
   if (!response.ok) {

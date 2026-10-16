@@ -33,8 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await fetchApi("/users/me");
       setProfile(data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
+    } catch (error: any) {
+      if (
+        error?.message?.toLowerCase().includes("unauthorized") ||
+        error?.message?.includes("401")
+      ) {
+        setProfile(null);
+      } else {
+        console.error("Error fetching profile:", error);
+      }
     } finally {
       setIsLoading(false);
     }

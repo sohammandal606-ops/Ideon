@@ -141,8 +141,10 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           setStartups(enriched);
         }
-      } catch (e) {
-        console.error("Error loading startups", e);
+      } catch (e: any) {
+        if (!e?.message?.toLowerCase().includes("unauthorized") && !e?.message?.includes("401")) {
+          console.error("Error loading startups", e);
+        }
       }
     }
 
