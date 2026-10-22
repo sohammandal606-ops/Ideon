@@ -49,6 +49,7 @@ import {
   AgentWorkflowOutput,
 } from "@/context/project-modal-context";
 import { fetchApi } from "@/lib/api";
+import { AIConsultantDrawer } from "@/components/dashboard/ai-consultant-drawer";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -186,6 +187,7 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
   const [showSummaryMatrix, setShowSummaryMatrix] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isConsultantOpen, setIsConsultantOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -475,6 +477,16 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
                   ) : (
                     <ChevronDown className="w-3.5 h-3.5 text-purple-400" />
                   )}
+                </button>
+
+                {/* AI Consultant Chat Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsConsultantOpen(true)}
+                  className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl bg-gradient-to-r from-purple-600/25 via-indigo-600/25 to-cyan-500/25 hover:from-purple-600/40 hover:via-indigo-600/40 hover:to-cyan-500/40 border border-purple-500/40 text-purple-200 hover:text-white text-xs font-semibold flex items-center gap-2 transition-all active:scale-[0.98] cursor-pointer shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
+                  <span>Chat with AI Consultant</span>
                 </button>
               </div>
 
@@ -1499,6 +1511,17 @@ export default function ProjectAnalysisPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* RAG-Grounded AI Consultant Chat Drawer */}
+      {project && (
+        <AIConsultantDrawer
+          isOpen={isConsultantOpen}
+          onClose={() => setIsConsultantOpen(false)}
+          startupId={projectId}
+          startupName={project.name}
+          viabilityScore={project.viabilityScore}
+        />
+      )}
     </div>
   );
 }

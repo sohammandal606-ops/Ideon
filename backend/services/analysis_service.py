@@ -240,6 +240,22 @@ class AnalysisService:
                     analysis=analysis,
                     final_state_snapshot=final_state,
                 )
+                try:
+                    from services.rag_indexer import index_completed_analysis
+
+                    await index_completed_analysis(
+                        session=session,
+                        startup_id=startup_id,
+                        analysis_id=analysis_id,
+                        final_state=final_state,
+                    )
+                except Exception as index_err:
+                    logger.error(
+                        "Failed to index completed analysis %s into pgvector: %s",
+                        analysis_id,
+                        index_err,
+                        exc_info=True,
+                    )
 
     # langgraph workflow...
 
@@ -351,6 +367,40 @@ class AnalysisService:
             raise AnalysisNotFoundError("Analysis run not found")
 
         return analysis
+
+    async def ensure_analysis_indexed(
+        self,
+        session: AsyncSession,
+        startup_id: UUID,
+    ) -> int:
+        """Ensure that the latest completed analysis for a startup is indexed in pgvector.
+
+        If chunks are missing, indexes them from the final_state_snapshot.
+        """
+        from db.models.document import DocumentChunk
+        from services.rag_indexer import index_completed_analysis
+        from sqlmodel import select
+
+        # Check if chunks already exist
+        check_stmt = (
+            select(DocumentChunk.id)
+            .where(DocumentChunk.startup_id == startup_id)
+            .limit(1)
+        )
+        existing = (await session.exec(check_stmt)).first()
+        if existing:
+            return 0
+
+        latest = await self.analysis_repository.get_latest(session, startup_id)
+        if not latest or not latest.final_state_snapshot:
+            return 0
+
+        return await index_completed_analysis(
+            session=session,
+            startup_id=startup_id,
+            analysis_id=latest.id,
+            final_state=latest.final_state_snapshot,
+        )
 
 
 # Dependencies....

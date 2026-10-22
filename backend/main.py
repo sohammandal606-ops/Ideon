@@ -16,7 +16,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import text
 
 from api.v1.deps import DatabaseSession
-from api.v1.routes import analysis_router, auth_router, startups_router, users_router
+from api.v1.routes import (
+    analysis_router,
+    auth_router,
+    chat_router,
+    startups_router,
+    users_router,
+)
 from db.connection import engine
 
 
@@ -53,6 +59,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(startups_router)
 app.include_router(analysis_router)
+app.include_router(chat_router)
 
 
 @app.get("/api/v1/health", tags=["health"])

@@ -2,7 +2,14 @@
 
 from .analysis import router as analysis_router
 from .auth import router as auth_router
+from .chat import router as chat_router
 from .startups import router as startups_router
 from .users import router as users_router
 
-__all__ = ["auth_router", "users_router", "startups_router", "analysis_router"]
+__all__ = [
+    "auth_router",
+    "users_router",
+    "startups_router",
+    "analysis_router",
+    "chat_router",
+]
