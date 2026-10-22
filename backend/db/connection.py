@@ -19,10 +19,19 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.config import settings
 
+def _get_db_url(raw_url: str) -> str:
+    url = raw_url.strip()
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
 # Connection pool: keeps a few database connections open and ready to use
 # so we don't create a new connection for every single request.
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    _get_db_url(settings.DATABASE_URL),
     pool_size=4,  # keep 4 connections open at all times
     max_overflow=2,  # allow 2 extra connections during traffic spikes
     pool_timeout=30,  # wait up to 30s for a free connection

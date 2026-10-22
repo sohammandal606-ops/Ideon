@@ -61,12 +61,40 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def ensure_cors_on_all_responses(request: Request, call_next):
+    """Guarantee CORS headers are present even when exceptions or 500s occur."""
+    origin = request.headers.get("origin")
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.exception("Unhandled error processing %s %s: %s", request.method, request.url.path, exc)
+        response = JSONResponse(
+            status_code=500,
+            content={"detail": f"Database/Server error: {str(exc)}"},
+        )
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.exception("Unhandled error processing %s %s: %s", request.method, request.url.path, exc)
+    origin = request.headers.get("origin", "https://ideon-ecru.vercel.app")
+    headers = {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "*",
+        "Access-Control-Allow-Headers": "*",
+    }
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error. Please check server logs."},
+        content={"detail": f"Database/Server error: {str(exc)}"},
+        headers=headers,
     )
 
 # Connect our route files to the main app so FastAPI knows about them
